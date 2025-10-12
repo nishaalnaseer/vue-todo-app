@@ -12,7 +12,7 @@ function addTodo() {
   if (!description) return;
 
   const id = Date.now().toString(); // key for Map
-  todos.value.set(id, { todo: description, date: new Date() });
+  todos.value.set(id, { todo: description, date: new Date(), done: false });
   newTodo.value = '';
 }
 function removeTodo(description: string) {
@@ -29,6 +29,13 @@ function removeTodo(description: string) {
         border-2 border-gray-400">
           <div class="font-semibold text-xl text-gray-700">{{ todo.todo }}</div>
           <div class="text-sm text-gray-700">{{ todo.date.toUTCString() }}</div>
+          <span>
+            <span class="text-sm text-gray-800">Done?</span>
+            <span class="text-sm text-gray-700 px-2">
+              {{ todo.done ? "Yes" : "No"}}
+            </span>
+          </span>
+
           <div class="flex justify-center w-full pt-4">
             <button @click="removeTodo(id)"
             class="text-red-500 hover:text-red-600 cursor-pointer border
