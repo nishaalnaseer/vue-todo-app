@@ -1,16 +1,34 @@
 <script setup lang="ts">
 
 import AppRoot from "./AppRoot.vue";
-import {UsersPagination} from "../models.ts";
-import { onMounted, ref, watch } from "vue";
+import {
+  UsersPagination, type ApplicationModelFields,
+  type ApplicationBaseObject
+} from "../models.ts";
 import {apiRoot} from "./../konstants.ts";
+import { onMounted, ref, watch, computed } from "vue";
 import {RouterLink, useRoute} from "vue-router";
+import UserComponent from "./UserComponent.vue";
+import TodoComponent from "./TodoComponent.vue";
 
 const route = useRoute();
 const appModel = ref(new UsersPagination());
 const loading = ref(true);
+const isOverlayOpen = ref(false);
 const paginationTokens = ref<string[]>([]);
-const segment = route.path.split('/')[1];
+const segment = computed(() => route.path.split('/')[1] ?? "");
+let selectedResource: ApplicationBaseObject | null = null;
+
+const componentMap = {
+  users: UserComponent,
+  todos: TodoComponent,
+} as const;
+
+
+function closeOverlay() {
+  isOverlayOpen.value = false;
+}
+
 
 async function fetchData() {
   try {
@@ -21,7 +39,8 @@ async function fetchData() {
     const url = `${apiRoot}${appModel.value.getRoute}/${pageNumber}/${pageSize}`
     const response = await fetch(url);
     if(response.status != 200) {
-      console.error("Got unexpected status code");
+      console.error(`Got unexpected status code ${response.status}
+      \nContent: ${await response.text()}`);
       return;
     }
     await appModel.value.onResponse(response);
@@ -42,6 +61,9 @@ onMounted(() => {
 watch(() => route.params, () => {
   fetchData();
 }, { deep: true });
+watch(isOverlayOpen, (val) => {
+  document.body.style.overflow = val ? "hidden" : "";
+});
 
 function getPaginationTokens(): string[] {
   const currentPage: number = appModel.value.current_page;
@@ -94,12 +116,32 @@ function getPaginationTokens(): string[] {
   return tokens;
 }
 
+
+function showResource(resource: ApplicationModelFields) {
+  console.log(resource);
+  isOverlayOpen.value = true;
+  selectedResource = resource;
+}
+
 </script>
 
 <template>
+  <div
+    v-if="isOverlayOpen"
+    @click.self="closeOverlay"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm
+    flex items-center justify-center z-50">
+    <div class="bg-white rounded p-4 w-128" @click.stop>
+      <component
+        v-if="componentMap[segment as keyof typeof componentMap]"
+        :is="componentMap[segment as keyof typeof componentMap]"
+        :model="appModel"
+        :resource="selectedResource"/>
+    </div>
+  </div>
   <AppRoot>
     <div class="py-2 w-full text-center font-bold text-gray-700 text-lg">
-      {{ appModel.heading }}
+      {{ appModel.paginatedHeading }}
     </div>
     <div class="overflow-x-auto rounded-lg border border-gray-300 mb-2">
       <table class="table-auto border-collapse w-full text-left text-sm">
@@ -107,16 +149,19 @@ function getPaginationTokens(): string[] {
           <tr>
             <th v-for="header in Object.values(appModel.tableHeaders)"
                 :key="header.title"
-                class="px-4 py-2 font-medium text-gray-700">{{ header.title }}</th>
+                class="px-4 py-2 font-medium text-gray-700">
+              {{ header.title }}
+            </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="row in appModel.tableRows"
-              class="hover:bg-gray-100 h-12 text-left text-sm cursor-pointer">
-            <th v-for="cell in row.cells"
+          <tr v-for="row in appModel.resources"
+              class="hover:bg-gray-100 h-12 text-left text-sm cursor-pointer"
+              @click="showResource(row)">
+            <td v-for="cell in row.fields.filter(c => c.showOnTable)"
               class="font-medium text-gray-600 px-4 py-2">
               {{ appModel.toStr(cell) }}
-            </th>
+            </td>
           </tr>
         </tbody>
       </table>

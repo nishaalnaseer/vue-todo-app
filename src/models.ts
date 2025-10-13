@@ -1,6 +1,6 @@
 type ApplicationPrimitive = string | number | boolean | Date;
 
-interface ApplicationBaseObject {}
+export interface ApplicationBaseObject {}
 
 interface Page<T = ApplicationBaseObject> {
   total_rows: number;
@@ -15,28 +15,29 @@ export interface ApplicationTableHead {
   toStr(value: ApplicationPrimitive): string;
 }
 
-export interface ApplicationRowCell {
+export interface ApplicationField {
   title: string;
   showOnTable: boolean;
+  overrideAsReadonly: boolean;
   value: ApplicationPrimitive;
 }
 
-export interface ApplicationTableRow {
+export interface ApplicationModelFields {
   id: string;
-  cells: ApplicationRowCell[];
+  fields: ApplicationField[];
   object: ApplicationBaseObject;
 }
 
 export interface PaginationMeta {
   readonly tableHeaders: Record<string, ApplicationTableHead>;
-  tableRows: ApplicationTableRow[];
+  resources: ApplicationModelFields[];
 
   readonly postPatchRoute: string;
   readonly getRoute: string;
   readonly overrideAsReadonly: boolean;
   readonly updateRights: string;
   readonly writeRights: string;
-  readonly heading: string;
+  readonly paginatedHeading: string;
 
   total_rows: number;
   current_page: number;
@@ -46,7 +47,7 @@ export interface PaginationMeta {
   isWriteable(rights: string[]): boolean;
   isUpdatable(rights: string[]): boolean;
   onResponse(response: Response): void;
-  toStr(cell: ApplicationRowCell): string;
+  toStr(cell: ApplicationField): string;
 }
 
 export abstract class PaginatedEntity implements PaginationMeta {
@@ -54,10 +55,11 @@ export abstract class PaginatedEntity implements PaginationMeta {
   readonly overrideAsReadonly!: boolean;
   readonly postPatchRoute!: string;
   readonly tableHeaders!: Record<string, ApplicationTableHead>;
-  tableRows!: ApplicationTableRow[];
+  resources!: ApplicationModelFields[];
   readonly updateRights!: string;
   readonly writeRights!: string;
-  readonly heading!: string;
+  readonly paginatedHeading!: string;
+  readonly modelViewHeading!: string;
 
   isUpdatable(rights: string[]): boolean {
     return this.updateRights in rights;
@@ -71,7 +73,7 @@ export abstract class PaginatedEntity implements PaginationMeta {
     throw "unimplemented";
   }
 
-  toStr(cell: ApplicationRowCell): string {
+  toStr(cell: ApplicationField): string {
     const header = this.tableHeaders[cell.title];
     if(!header) {
       throw `Header for cell ${cell.title} not found. headers: ${this.tableHeaders}`;
@@ -118,11 +120,11 @@ export class TodoPagination extends PaginatedEntity {
 
   readonly updateRights: string = "";
   readonly writeRights: string = "";
-  readonly heading: string = "Todos";
+  readonly paginatedHeading: string = "Todos";
 
   constructor() {
     super();
-    this.tableRows = [];
+    this.resources = [];
   }
 }
 
@@ -155,11 +157,13 @@ export class UsersPagination extends PaginatedEntity {
 
   readonly updateRights: string = "";
   readonly writeRights: string = "";
-  readonly heading: string = "Users";
+
+  readonly paginatedHeading: string = "Users";
+  readonly modelViewHeading: string = "User Details";
 
   async onResponse(response: Response): Promise<void> {
     let content: Page<User> = await response.json();
-    this.tableRows = [];
+    this.resources = [];
     const users = content.page;
 
     this.total_rows = content.total_rows;
@@ -172,44 +176,54 @@ export class UsersPagination extends PaginatedEntity {
       user.created = new Date(user.created);
       const cells = [
         {
+          title: "ID",
+          showOnTable: false,
+          value: user.staff_id,
+          overrideAsReadonly: true
+        },
+        {
           title: "Staff ID",
           showOnTable: true,
           value: user.staff_id,
+          overrideAsReadonly: false
         },
         {
           title: "Name",
           showOnTable: true,
           value: user.name,
+          overrideAsReadonly: false
         },
         {
           title: "Email",
           showOnTable: true,
           value: user.email,
+          overrideAsReadonly: false
         },
         {
           title: "Joined Date",
           showOnTable: true,
           value: user.joined,
+          overrideAsReadonly: false
         },
         {
           title: "User Created",
           showOnTable: true,
           value: user.created,
+          overrideAsReadonly: true
         },
         {
           title: "Enabled",
           showOnTable: true,
           value: user.enabled,
+          overrideAsReadonly: false
         },
       ]
-      this.tableRows.push({cells: cells, object: user, id: `${user.id}`});
-
+      this.resources.push({fields: cells, object: user, id: `${user.id}`});
     }
-    console.log(this.tableRows);
   }
 
   constructor() {
     super();
-    this.tableRows = [];
+    this.resources = [];
   }
 }

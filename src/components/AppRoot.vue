@@ -19,7 +19,7 @@ function getYear() {
   class="fixed inset-0 bg-opacity-50 z-40 backdrop-blur-sm bg-black/50
   flex flex-start"
   @click="toggleDrawer">
-  <div class="bg-white w-64">
+  <div class="bg-white w-64" @click.stop>
     <p class="text-lg font-bold text-center w-full text-red-700 p-4"
        id="dashboard-heading">Todo App</p>
     <NavigationBar
