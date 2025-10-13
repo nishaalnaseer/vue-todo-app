@@ -12,7 +12,9 @@ function addTodo() {
   if (!description) return;
 
   const id = Date.now().toString(); // key for Map
-  todos.value.set(id, { todo: description, date: new Date(), done: false });
+  todos.value.set(
+      id, { todo: description, date: new Date(), done: false, id:parseInt(id) }
+  );
   newTodo.value = '';
 }
 function removeTodo(description: string) {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { defineProps } from 'vue';
-import { useRoute } from 'vue-router';
+import {RouterLink, useRoute} from 'vue-router';
 
 const route = useRoute();
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const dimensions = props.dimensions ?? 'h-[26px] w-[26px]'; // fallback default
+const dimensions = props.dimensions ?? 'h-[26px] w-[26px]';
 
 function getSvg(color: string, props: Props): string {
   return `/src/assets/svgs/${props.icon}-${color}.svg`;
@@ -43,24 +43,30 @@ function displayBlack(): boolean {
   return route.path !== props.to;
 }
 
+
 </script>
 
 <template>
-  <RouterLink :to="props.to" class="w-full">
-    <button class="w-full px-2 py-0.5">
-      <div
-        :class="`${mainClass()}`">
+  <component
+    :is="displayBlack() ? RouterLink : 'div'"
+    :to="displayBlack() ? props.to : undefined">
+    <button class="w-full px-2 py-0.25">
+      <div :class="mainClass()">
         <span class="px-2">{{ props.label }}</span>
         <img
           v-if="displayBlack()"
-          :src="`${getSvg('b', props)}`"
+          :src="getSvg('b', props)"
           :class="`${dimensions} group-hover:hidden select-none`"
-         alt=""/>
-        <img :src="`${getSvg('w', props)}`" alt=""
-             :class="`${dimensions}  ${getWhiteSVGClass()}`" />
+          alt=""
+        />
+        <img
+          :src="getSvg('w', props)"
+          :class="`${dimensions} ${getWhiteSVGClass()}`"
+          alt=""
+        />
       </div>
     </button>
-  </RouterLink>
+  </component>
 </template>
 
 <style scoped>

@@ -42,7 +42,6 @@ class Page(BaseModel, Generic[T]):
     page: List[T]
 
 
-
 users = [
     User(id=1, staff_id="STF001", name="Alice Johnson", created=datetime(2023, 1, 15, 9, 0),
          joined=datetime(2023, 2, 1, 9, 0), enabled=True, email="alice.johnson@company.com"),

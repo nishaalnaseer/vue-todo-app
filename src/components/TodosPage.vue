@@ -8,6 +8,7 @@ const todosValue: Map<string, Todo> = new Map();
 for (let i = 1; i <= 50; i++) {
   const key = `todo-${i}`;
   const value: Todo = {
+    id: i,
     todo: `Demo Todo #${i}`,
     date: new Date(2025, 9, i % 30 + 1),
     done: false

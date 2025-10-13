@@ -31,6 +31,11 @@ function getYear() {
       label="Todos"
       to="/todos"
       icon="receipt"/>
+    <NavigationBar
+      label="Users"
+      to="/users/1/10"
+      dimensions="h-[44px] w-[44px]"
+      icon="users1"/>
   </div>
 </div>
 
