@@ -267,7 +267,7 @@ def get_users(
     )
 
 
-@app.get("/todo/{page}/{page_size}")
+@app.get("/todos/{page}/{page_size}")
 def get_todos(
         page: Annotated[int, Path(...)],
         page_size: Annotated[int, Path(...)]

@@ -1,6 +1,16 @@
-type ApplicationPrimitive = string | number | boolean | Date;
+type ApplicationBaseField = string | number | boolean
+  | Date | ApplicationBaseObject;
 
-export interface ApplicationBaseObject {}
+export interface ApplicationBaseObject {
+  [key: string]: ApplicationBaseField
+}
+
+
+export type FormFieldType =
+  | "TextInputField"
+  | "DateInputField"
+  | "CheckBoxInputField";
+
 
 interface Page<T = ApplicationBaseObject> {
   total_rows: number;
@@ -9,17 +19,24 @@ interface Page<T = ApplicationBaseObject> {
   page: T[];   // <-- now typed with T
 }
 
-export interface ApplicationTableHead {
+export interface ApplicationFormFieldMetaData {
   title: string;
+  showOnTable: boolean;
+  formOverrideAsReadOnly: boolean;
+  formInputType: FormFieldType;
 
-  toStr(value: ApplicationPrimitive): string;
+  jsonKey: string;
+  dumpOnCreate: boolean;
+  dumpOnUpdate: boolean;
+
+  fromJson?(value: ApplicationBaseField): ApplicationBaseField;
+  toStr(value: ApplicationBaseField): string;
 }
 
 export interface ApplicationField {
   title: string;
-  showOnTable: boolean;
-  overrideAsReadonly: boolean;
-  value: ApplicationPrimitive;
+
+  value: ApplicationBaseField;
 }
 
 export interface ApplicationModelFields {
@@ -29,7 +46,7 @@ export interface ApplicationModelFields {
 }
 
 export interface PaginationMeta {
-  readonly tableHeaders: Record<string, ApplicationTableHead>;
+  readonly metadata: Record<string, ApplicationFormFieldMetaData>;
   resources: ApplicationModelFields[];
 
   readonly postPatchRoute: string;
@@ -48,18 +65,21 @@ export interface PaginationMeta {
   isUpdatable(rights: string[]): boolean;
   onResponse(response: Response): void;
   toStr(cell: ApplicationField): string;
+  idFromJson(_: ApplicationBaseObject): string;
 }
 
 export abstract class PaginatedEntity implements PaginationMeta {
   readonly getRoute!: string;
   readonly overrideAsReadonly!: boolean;
   readonly postPatchRoute!: string;
-  readonly tableHeaders!: Record<string, ApplicationTableHead>;
+  readonly metadata!: Record<string, ApplicationFormFieldMetaData>;
   resources!: ApplicationModelFields[];
   readonly updateRights!: string;
   readonly writeRights!: string;
   readonly paginatedHeading!: string;
-  readonly modelViewHeading!: string;
+  readonly formHeadingOnCreate!: string;
+  readonly formHeadingOnUpdate!: string;
+  readonly formHeadingOnRead!: string;
 
   isUpdatable(rights: string[]): boolean {
     return this.updateRights in rights;
@@ -69,14 +89,14 @@ export abstract class PaginatedEntity implements PaginationMeta {
     return this.writeRights in rights;
   }
 
-  onResponse(_: Response): void {
-    throw "unimplemented";
-  }
+  // onResponse(_: Response): void {
+  //   throw "unimplemented on response";
+  // }
 
   toStr(cell: ApplicationField): string {
-    const header = this.tableHeaders[cell.title];
+    const header = this.metadata[cell.title];
     if(!header) {
-      throw `Header for cell ${cell.title} not found. headers: ${this.tableHeaders}`;
+      throw `Header for cell ${cell.title} not found. headers: ${this.metadata}`;
     }
     return header.toStr(cell.value);
   }
@@ -85,6 +105,55 @@ export abstract class PaginatedEntity implements PaginationMeta {
   rows_per_page: number = 0;
   total_rows: number = 0;
   totalPages: number = 0;
+
+  calculatePageMetaData(content: Page) {
+    this.total_rows = content.total_rows;
+    this.current_page = content.current_page;
+    this.rows_per_page = content.rows_per_page;
+    this.totalPages = Math.ceil(this.total_rows / this.rows_per_page);
+  }
+
+  async onResponse(response: Response): Promise<void> {
+    let content: Page = await response.json();
+    this.resources = [];
+    const resources = content.page;
+    this.calculatePageMetaData(content);
+
+    for (let resource of resources) {
+      const fields = [];
+      for (const [key, meta] of
+        Object.entries(this.metadata)) {
+        meta.jsonKey;
+        let fieldValue = resource[meta.jsonKey];
+
+        if(fieldValue == undefined) {
+          console.error(`field value for ${key} is ${fieldValue}`);
+          continue;
+        }
+
+        if(meta.fromJson != null) {
+          fieldValue = meta.fromJson(fieldValue);
+        }
+
+        fields.push(
+          {
+            title: meta.title,
+            value: fieldValue,
+          },
+        )
+      }
+      this.resources.push({
+        id: this.idFromJson(resource),
+        fields: fields,
+        object: resource,
+      });
+      // this.resources.push(cells);
+    }
+  }
+
+  idFromJson(_: ApplicationBaseObject): string {
+    throw "unimplemented";
+  }
 }
 
 export interface Todo extends ApplicationBaseObject {
@@ -107,20 +176,65 @@ export class TodoPagination extends PaginatedEntity {
   readonly getRoute: string = "/todos";
   readonly overrideAsReadonly: boolean = false;
   readonly postPatchRoute: string = "/todo";
-  readonly tableHeaders: Record<string, ApplicationTableHead> = {
-    "Date": {title: "Date", toStr: (value: Date) => {
-      const shifted = new Date(value.getTime() + 5 * 60 * 60 * 1000);
-      return shifted.toUTCString();
-    }},
-    "Todo": {title: "Todo", toStr: (value: string) => value},
+  readonly metadata: Record<string, ApplicationFormFieldMetaData> = {
+    "UID": {
+      title: "UID",
+      showOnTable: true,
+      formOverrideAsReadOnly: true,
+      formInputType: "TextInputField",
+      jsonKey: "id",
+      dumpOnCreate: false,
+      dumpOnUpdate: true,
+      toStr: (value: number) => {
+        return `${value}`;
+      }
+    },
+    "Date": {
+      title: "Date",
+      showOnTable: true,
+      jsonKey: "date",
+      dumpOnCreate: true,
+      dumpOnUpdate: true,
+      formOverrideAsReadOnly: false,
+      formInputType: "DateInputField",
+      toStr: (value: Date) => {
+        return value.toUTCString().replace("GMT", "");
+      },
+      fromJson(value: string | number): ApplicationBaseField {
+        return new Date(value);
+      }
+    },
+    "Todo": {
+      title: "Todo",
+      showOnTable: true,
+      jsonKey: "todo",
+      dumpOnCreate: true,
+      dumpOnUpdate: true,
+      formOverrideAsReadOnly: false,
+      formInputType: "TextInputField",
+      toStr: (value: string) => value},
     "Completed": {
-      title: "Completed", toStr: (value: boolean) => value ? "Yes" : "No"
+      title: "Completed",
+      showOnTable: true,
+      jsonKey: "done",
+      dumpOnCreate: true,
+      dumpOnUpdate: true,
+      formOverrideAsReadOnly: false,
+      formInputType: "CheckBoxInputField",
+      toStr: (value: boolean) => value ? "Yes" : "No"
     },
   };
 
   readonly updateRights: string = "";
   readonly writeRights: string = "";
   readonly paginatedHeading: string = "Todos";
+  readonly formHeadingOnCreate = "Create Todo";
+  readonly formHeadingOnUpdate = "Edit Todo";
+  readonly formHeadingOnRead = "Todo Details";
+
+  idFromJson(value: ApplicationBaseObject): string {
+    return `${value.id}`;
+  }
 
   constructor() {
     super();
@@ -132,26 +246,95 @@ export class UsersPagination extends PaginatedEntity {
   readonly getRoute: string = "/users";
   readonly overrideAsReadonly: boolean = false;
   readonly postPatchRoute: string = "/users";
-  readonly tableHeaders: Record<string, ApplicationTableHead> = {
-    "Staff ID": {title: "Staff ID", toStr: (value: string) => {
-      return value;
-    }},
-    "Name": {title: "Name", toStr: (value: string) => {
-      return value;
-    }},
-    "Email": {title: "Email", toStr: (value: string) => {
-      return value;
-    }},
-    "Joined Date": {title: "Joined Date", toStr: (value: Date) => {
-      const shifted = new Date(value.getTime() + 5 * 60 * 60 * 1000);
-      return shifted.toUTCString().replace("GMT", "");
-    }},
-    "User Created": {title: "User Created", toStr: (value: Date) => {
-      const shifted = new Date(value.getTime() + 5 * 60 * 60 * 1000);
-      return shifted.toUTCString().replace("GMT", "");
-    }},
+  readonly metadata: Record<string, ApplicationFormFieldMetaData> = {
+    "UID": {
+      title: "UID",
+      showOnTable: true,
+      formOverrideAsReadOnly: true,
+      jsonKey: "id",
+      dumpOnCreate: false,
+      dumpOnUpdate: true,
+      formInputType: "TextInputField",
+      toStr: (value: string) => {
+        return value;
+      }
+    },
+    "Staff ID": {
+      title: "Staff ID",
+      showOnTable: true,
+      jsonKey: "staff_id",
+      dumpOnCreate: true,
+      dumpOnUpdate: true,
+      formOverrideAsReadOnly: false,
+      formInputType: "TextInputField",
+      toStr: (value: string) => {
+        return value;
+      }
+    },
+    "Name": {
+      title: "Name",
+      showOnTable: true,
+      jsonKey: "name",
+      dumpOnCreate: true,
+      dumpOnUpdate: true,
+      formOverrideAsReadOnly: false,
+      formInputType: "TextInputField",
+      toStr: (value: string) => {
+        return value;
+      }
+    },
+    "Email": {
+      title: "Email",
+      showOnTable: true,
+      jsonKey: "email",
+      dumpOnCreate: true,
+      dumpOnUpdate: true,
+      formOverrideAsReadOnly: false,
+      formInputType: "TextInputField",
+      toStr: (value: string) => {
+        return value;
+      }
+    },
+    "Joined Date": {
+      title: "Joined Date",
+      showOnTable: true,
+      jsonKey: "joined",
+      dumpOnCreate: true,
+      dumpOnUpdate: true,
+      formOverrideAsReadOnly: false,
+      formInputType: "DateInputField",
+      toStr: (value: Date) => {
+        // const shifted = new Date(value.getTime() + 5 * 60 * 60 * 1000);
+        return value.toUTCString().replace("GMT", "");
+      },
+      fromJson(value: string | number): ApplicationBaseField {
+        return new Date(value);
+      }
+    },
+    "User Created": {
+      title: "User Created",
+      showOnTable: true,
+      formOverrideAsReadOnly: true,
+      jsonKey: "created",
+      dumpOnCreate: false,
+      dumpOnUpdate: false,
+      formInputType: "DateInputField",
+      toStr: (value: Date) => {
+        return value.toUTCString().replace("GMT", "");
+      },
+      fromJson(value: string | number): ApplicationBaseField {
+        return new Date(value);
+      }
+    },
     "Enabled": {
-      title: "Enabled", toStr: (value: boolean) => value ? "Yes" : "No"
+      title: "Enabled",
+      showOnTable: true,
+      jsonKey: "enabled",
+      dumpOnCreate: true,
+      dumpOnUpdate: true,
+      formOverrideAsReadOnly: false,
+      formInputType: "CheckBoxInputField",
+      toStr: (value: boolean) => value ? "Yes" : "No"
     },
   };
 
@@ -159,67 +342,12 @@ export class UsersPagination extends PaginatedEntity {
   readonly writeRights: string = "";
 
   readonly paginatedHeading: string = "Users";
-  readonly modelViewHeading: string = "User Details";
+  readonly formHeadingOnCreate = "Create User";
+  readonly formHeadingOnUpdate = "Edit User";
+  readonly formHeadingOnRead = "User Details";
 
-  async onResponse(response: Response): Promise<void> {
-    let content: Page<User> = await response.json();
-    this.resources = [];
-    const users = content.page;
-
-    this.total_rows = content.total_rows;
-    this.current_page = content.current_page;
-    this.rows_per_page = content.rows_per_page;
-    this.totalPages = Math.ceil(this.total_rows / this.rows_per_page);
-
-    for (let user of users) {
-      user.joined = new Date(user.joined);
-      user.created = new Date(user.created);
-      const cells = [
-        {
-          title: "ID",
-          showOnTable: false,
-          value: user.staff_id,
-          overrideAsReadonly: true
-        },
-        {
-          title: "Staff ID",
-          showOnTable: true,
-          value: user.staff_id,
-          overrideAsReadonly: false
-        },
-        {
-          title: "Name",
-          showOnTable: true,
-          value: user.name,
-          overrideAsReadonly: false
-        },
-        {
-          title: "Email",
-          showOnTable: true,
-          value: user.email,
-          overrideAsReadonly: false
-        },
-        {
-          title: "Joined Date",
-          showOnTable: true,
-          value: user.joined,
-          overrideAsReadonly: false
-        },
-        {
-          title: "User Created",
-          showOnTable: true,
-          value: user.created,
-          overrideAsReadonly: true
-        },
-        {
-          title: "Enabled",
-          showOnTable: true,
-          value: user.enabled,
-          overrideAsReadonly: false
-        },
-      ]
-      this.resources.push({fields: cells, object: user, id: `${user.id}`});
-    }
+  idFromJson(value: ApplicationBaseObject): string {
+    return `${value.id}`;
   }
 
   constructor() {

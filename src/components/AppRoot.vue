@@ -29,7 +29,7 @@ function getYear() {
       dimensions="h-[22px] w-[22px]"/>
     <NavigationBar
       label="Todos"
-      to="/todos"
+      to="/todos/1/10"
       icon="receipt"/>
     <NavigationBar
       label="Users"

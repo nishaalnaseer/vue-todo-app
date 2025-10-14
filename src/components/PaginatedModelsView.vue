@@ -2,17 +2,20 @@
 
 import AppRoot from "./AppRoot.vue";
 import {
-  UsersPagination, type ApplicationModelFields,
-  type ApplicationBaseObject
+  type ApplicationModelFields,
+  type ApplicationBaseObject, PaginatedEntity
 } from "../models.ts";
 import {apiRoot} from "./../konstants.ts";
 import { onMounted, ref, watch, computed } from "vue";
 import {RouterLink, useRoute} from "vue-router";
-import UserComponent from "./UserComponent.vue";
 import TodoComponent from "./TodoComponent.vue";
+import ModelView from "./ModelView.vue";
 
 const route = useRoute();
-const appModel = ref(new UsersPagination());
+
+const props = defineProps<{appModel: PaginatedEntity}>();
+
+const appModel = ref(props.appModel);
 const loading = ref(true);
 const isOverlayOpen = ref(false);
 const paginationTokens = ref<string[]>([]);
@@ -20,7 +23,7 @@ const segment = computed(() => route.path.split('/')[1] ?? "");
 let selectedResource: ApplicationBaseObject | null = null;
 
 const componentMap = {
-  users: UserComponent,
+  users: ModelView,
   todos: TodoComponent,
 } as const;
 
@@ -86,39 +89,29 @@ function getPaginationTokens(): string[] {
     }
   }
 
-  for(
-      let currentNum = leftPartEnd;
-      currentNum < currentPage;
-      currentNum++
-  ) {
+  for(let currentNum = leftPartEnd; currentNum < currentPage; currentNum++) {
     tokens.push(`${currentNum}`);
   }
   tokens.push(`${currentPage}`);
 
   if(currentPage < totalPages) {
-      for(
-          let currentNum = currentPage+1;
-          currentNum < rightPartEnd;
-          currentNum++
-      ) {
-          tokens.push(`${currentNum}`);
-      }
+    for(let currentNum = currentPage+1; currentNum < rightPartEnd; currentNum++) {
+      tokens.push(`${currentNum}`);
+    }
   }
 
   if(rightPartEnd !== totalPages) {
-      tokens.push("...")
+    tokens.push("...")
   }
 
   if(currentPage < totalPages) {
-      tokens.push(`${totalPages}`);
+    tokens.push(`${totalPages}`);
   }
-  console.log(tokens);
   return tokens;
 }
 
 
 function showResource(resource: ApplicationModelFields) {
-  console.log(resource);
   isOverlayOpen.value = true;
   selectedResource = resource;
 }
@@ -130,13 +123,15 @@ function showResource(resource: ApplicationModelFields) {
     v-if="isOverlayOpen"
     @click.self="closeOverlay"
     class="fixed inset-0 bg-black/50 backdrop-blur-sm
-    flex items-center justify-center z-50">
-    <div class="bg-white rounded p-4 w-128" @click.stop>
+    flex items-center justify-center z-50 " style="overflow: auto;">
+    <div class="bg-white rounded-lg p-4 w-128 max-h-[90vh] overflow-y-auto
+    flex flex-col"
+         @click.stop>
       <component
         v-if="componentMap[segment as keyof typeof componentMap]"
         :is="componentMap[segment as keyof typeof componentMap]"
-        :model="appModel"
-        :resource="selectedResource"/>
+        :appModel="appModel"
+        :object="selectedResource"/>
     </div>
   </div>
   <AppRoot>
@@ -147,7 +142,7 @@ function showResource(resource: ApplicationModelFields) {
       <table class="table-auto border-collapse w-full text-left text-sm">
         <thead class="bg-gray-200 ">
           <tr>
-            <th v-for="header in Object.values(appModel.tableHeaders)"
+            <th v-for="header in Object.values(appModel.metadata)"
                 :key="header.title"
                 class="px-4 py-2 font-medium text-gray-700">
               {{ header.title }}
@@ -158,9 +153,11 @@ function showResource(resource: ApplicationModelFields) {
           <tr v-for="row in appModel.resources"
               class="hover:bg-gray-100 h-12 text-left text-sm cursor-pointer"
               @click="showResource(row)">
-            <td v-for="cell in row.fields.filter(c => c.showOnTable)"
+            <td v-for="cell in row.fields.filter(
+                c => appModel.metadata[c.title]?.showOnTable ?? false
+              )"
               class="font-medium text-gray-600 px-4 py-2">
-              {{ appModel.toStr(cell) }}
+                {{ appModel.toStr(cell) }}
             </td>
           </tr>
         </tbody>
