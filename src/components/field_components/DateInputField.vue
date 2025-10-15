@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import {ref} from 'vue';
+import type {Mode} from "../../models.ts";
 
 const props = defineProps<{
   hint: string
-  initialValue?: string
+  initialValue?: Date | undefined
   disabled?: boolean | null,
   constant?: boolean | null,
 }>();
 
 const constant = props.constant ?? false;
 const disabled = props.disabled ?? false;
-const initialValue = props.initialValue == null ? new Date()
-    : new Date(props.initialValue);
+const initialValue = props.initialValue ?? new Date();
 
 // Convert Date to YYYY-MM-DD format for input
 function dateToInputValue(date: Date): string {
@@ -35,18 +35,27 @@ const handleInput = (event: Event) => {
 };
 
 defineExpose({
-  getValue: () => new Date(value.value) // Convert string back to Date
+  getValue: () => new Date(value.value),
+  errOut: () => {
+  },
+  greyOut: () => {
+  },
+  setMode: (mode: Mode) => {},
+  setValue: (value: string | Date | boolean) => {
+
+  }
 });
+
 
 </script>
 
 <template>
   <div>
-      <span class="text-gray-800 text-lg font-semibold">{{ props.hint }}</span>
-      <span class="text-gray-800 text-lg font-semibold pr-2" v-if="constant">:</span>
-      <span class="text-gray-800 text-lg" v-if="constant">
-        {{ parseDate(initialValue) }}
-      </span>
+    <span class="text-gray-800 text-lg font-semibold">{{ props.hint }}</span>
+    <span class="text-gray-800 text-lg font-semibold pr-2" v-if="constant">:</span>
+    <span class="text-gray-800 text-lg" v-if="constant">
+      {{ parseDate(initialValue) }}
+    </span>
   </div>
   <input v-if="!constant" type="date"
          min="2024-01-01"

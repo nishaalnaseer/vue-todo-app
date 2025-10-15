@@ -2,20 +2,33 @@
 
 import {
   PaginatedEntity, type FormFieldType,
-  type ApplicationModelFields
+  type ApplicationModelFields, type Mode
 } from "../models.ts";
+import {startLoading, stopLoading} from "../base.ts";
 import CheckBoxInputField from "./field_components/CheckBoxInputField.vue";
 import TextInputField from "./field_components/TextInputField.vue";
 import {type Component, type Ref, ref} from "vue";
 import DateInputField from "./field_components/DateInputField.vue";
+import {apiRoot} from "../konstants.ts";
 
-type Modes = | "View" | "Create" | "Edit";
 type FormComponents = typeof TextInputField | typeof DateInputField
     | typeof CheckBoxInputField;
-const mode: Ref<Modes> = ref("View");
+
+
+interface FieldComponentInstance {
+  getValue: () => string | Date | boolean;
+  errOut: () => void;
+  greyOut: () => void;
+  setMode: (mode: Mode) => void;
+  setValue: (value: string | Date | boolean) => void;
+}
+
+const mode: Ref<Mode> = ref("Edit");
+
 interface MountedComponent {
   component: FormComponents;
   props: Record<any, any>;
+  ref: Ref<FieldComponentInstance | null>;  // Changed this line
 }
 
 const props = defineProps<{
@@ -33,20 +46,112 @@ const componentMap: Record<FormFieldType, FormComponents> = {
 const mountedComponents: Record<string, MountedComponent> = {};
 for (const [key, meta] of Object.entries(appModel.value.metadata)) {
   const fieldData = object.value?.fields.find(f => f.title === key);
-  const initialVal = fieldData ? meta.toStr(fieldData.value) : null;
+  if(fieldData == undefined) {
+    console.error(`Field data undefined for title ${key}`);
+    continue;
+  }
   mountedComponents[key] = {
     component: componentMap[meta.formInputType],
+    ref: ref(null),
     props: {
       hint: meta.title,
       disabled: meta.formOverrideAsReadOnly,
       constant: meta.formOverrideAsReadOnly,
-      initialValue: initialVal,
+      initialValue: fieldData!.value,
     },
   };
 }
 
 
-function save() {
+function getCreateData(): Record<string, any> {
+  const values: Record<string, any> = {};
+  for (const [key, mounted] of Object.entries(mountedComponents)) {
+    if (mounted.ref.value && 'getValue' in mounted.ref.value) {
+
+      const meta = appModel.value.metadata[key];
+      if(!meta) {
+        console.error(`Metadata for key ${key} not found`)
+        continue;
+      }
+
+      if(!meta.dumpOnCreate) {
+        continue;
+      }
+
+      values[key] = mounted.ref.value.getValue();
+    }
+  }
+  console.log(values);
+  return values;
+}
+
+function getUpdateData(): Record<string, any> {
+  const values: Record<string, any> = {};
+  for (const [key, mounted] of Object.entries(mountedComponents)) {
+    // mounted.ref.
+    if (mounted.ref.value && 'getValue' in mounted.ref.value) {
+      const meta = appModel.value.metadata[key];
+      if(!meta) {
+        console.error(`Metadata for key ${key} not found`);
+        continue;
+      }
+
+      if(!meta.dumpOnUpdate) {
+        continue;
+      }
+
+      values[key] = mounted.ref.value.getValue();
+    } else {
+      console.log(`Ref value for key ${key} not found`);
+    }
+  }
+  console.log(values);
+  return values;
+}
+
+
+async function onSave() {
+  let data = {};
+  let method = "";
+  switch (mode.value) {
+    case "Create":
+      data = getCreateData();
+      method = "POST";
+      break;
+    case "Edit":
+      data = getUpdateData();
+      method = "PATCH";
+      break;
+    case "View":
+      return;
+    default:
+      throw "Unimplemented switch case statement onSave";
+  }
+  startLoading();
+
+  try {
+    const response = await fetch(
+      `${apiRoot}/user`,
+      {
+        method: method,
+        body: JSON.stringify(data),
+        headers: {
+          "Accept": "Application/json",
+          "Content-type": "Application/json",
+        }
+      }
+    );
+    if(response.status != 201) {
+      // todo
+    } else {
+
+    }
+  } catch (exc) {
+    // todo
+    console.error("error sending request");
+  } finally {
+    stopLoading();
+  }
 }
 
 function getHeading(): string {
@@ -61,10 +166,6 @@ function getHeading(): string {
       throw "Unimplemented view mode";
   }
 }
-
-// onMounted(() => {
-//   // onLoad();
-// })
 
 
 </script>
@@ -94,30 +195,17 @@ function getHeading(): string {
     <component
       v-for="(field, key) in mountedComponents"
       :key="key"
+      :ref="field.ref"
       :is="(field.component as Component)"
       v-bind="field.props"/>
-
-<!--    <TextInputField hint="UID" ref="idRef" :disabled="true" :constant="true"-->
-<!--                    initialValue="520"/>-->
-<!--    <TextInputField hint="Name" ref="nameRef"/>-->
-<!--    <TextInputField hint="Staff ID" ref="emailRef"/>-->
-<!--    <TextInputField hint="Email" ref="staffIDRef"/>-->
-<!--    <CheckBoxInputField hint="Enabled" class="py-1"/>-->
-<!--    <DateComponent hint="Joined" :initialValue="new Date()"/>-->
-<!--    <DateComponent hint="User Created" :disabled="true" :constant="true"-->
-<!--                   :initialValue="new Date()"/>-->
 
     <div class="flex justify-center pt-2">
       <button class="border px-4 py-2 rounded-lg bg-red-700 text-white
        font-semibold border-red-700 hover:bg-red-800
-       transition-all duration-300 cursor-pointer" @click="save()">
+       transition-all duration-300 cursor-pointer" @click="onSave()">
          Save
       </button>
     </div>
   </div>
 </div>
 </template>
-
-<style scoped>
-
-</style>

@@ -38,6 +38,17 @@ function getYear() {
       icon="users1"/>
   </div>
 </div>
+<div class="hidden fixed inset-0 z-[999] justify-center items-center
+            h-full backdrop-blur-sm bg-black/50" id="loading-overlay">
+  <div class="h-full items-center justify-center flex">
+    <div class="bg-white p-6 rounded-lg shadow-md flex flex-col items-center
+                w-50 h-50 justify-center">
+      <div class="w-20 h-20 border-4 border-red-700 border-t-transparent
+      rounded-full animate-spin"></div>
+      <p class="mt-4 text-gray-600 font-medium text-lg">Loading...</p>
+    </div>
+  </div>
+</div>
 
   <div>
     <div class="bg-red-600 text-white w-full flex py-2">

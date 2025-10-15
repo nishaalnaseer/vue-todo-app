@@ -2,25 +2,24 @@
 
 import AppRoot from "./AppRoot.vue";
 import {
-  type ApplicationModelFields,
-  type ApplicationBaseObject, PaginatedEntity
+  type ApplicationModelFields, PaginatedEntity
 } from "../models.ts";
 import {apiRoot} from "./../konstants.ts";
 import { onMounted, ref, watch, computed } from "vue";
 import {RouterLink, useRoute} from "vue-router";
 import TodoComponent from "./TodoComponent.vue";
 import ModelView from "./ModelView.vue";
+import {startLoading, stopLoading} from "../base.ts";
 
 const route = useRoute();
 
 const props = defineProps<{appModel: PaginatedEntity}>();
 
 const appModel = ref(props.appModel);
-const loading = ref(true);
 const isOverlayOpen = ref(false);
 const paginationTokens = ref<string[]>([]);
 const segment = computed(() => route.path.split('/')[1] ?? "");
-let selectedResource: ApplicationBaseObject | null = null;
+let selectedResource: ApplicationModelFields | null = null;
 
 const componentMap = {
   users: ModelView,
@@ -34,12 +33,12 @@ function closeOverlay() {
 
 
 async function fetchData() {
+  const pageNumber = route.params.pageNumber;
+  const pageSize = route.params.pageSize;
+  const url = `${apiRoot}${appModel.value.getResourcesRoute}/${pageNumber}/${pageSize}`
   try {
-    loading.value = true;
-    const pageNumber = route.params.pageNumber;
-    const pageSize = route.params.pageSize;
+    startLoading();
 
-    const url = `${apiRoot}${appModel.value.getRoute}/${pageNumber}/${pageSize}`
     const response = await fetch(url);
     if(response.status != 200) {
       console.error(`Got unexpected status code ${response.status}
@@ -51,7 +50,7 @@ async function fetchData() {
   } catch (exc) {
     console.error('Error loading data: ', exc)
   } finally {
-    loading.value = false
+    stopLoading();
   }
 }
 

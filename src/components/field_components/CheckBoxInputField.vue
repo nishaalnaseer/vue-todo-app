@@ -2,21 +2,30 @@
 
 
 import {ref} from "vue";
+import type {Mode} from "../../models.ts";
 
 const props = defineProps<{
   hint: string
-  initialValue?: string
+  initialValue?: boolean
   disabled?: boolean | null,
 }>();
 
-const initialValue = props.initialValue == null ? true
-    : props.initialValue == "Yes";
+const initialValue = props.initialValue ?? true;
 const disabled = props.disabled ?? false;
 const value = ref(initialValue);
 
 defineExpose({
-  getValue: () => value.value
+  getValue: () => value.value,
+  errOut: () => {
+  },
+  greyOut: () => {
+  },
+  setMode: (mode: Mode) => {},
+  setValue: (value: string | Date | boolean) => {
+
+  }
 });
+
 
 </script>
 

@@ -1,10 +1,11 @@
+
 type ApplicationBaseField = string | number | boolean
   | Date | ApplicationBaseObject;
 
 export interface ApplicationBaseObject {
   [key: string]: ApplicationBaseField
 }
-
+export type Mode = | "View" | "Create" | "Edit";
 
 export type FormFieldType =
   | "TextInputField"
@@ -49,12 +50,13 @@ export interface PaginationMeta {
   readonly metadata: Record<string, ApplicationFormFieldMetaData>;
   resources: ApplicationModelFields[];
 
-  readonly postPatchRoute: string;
-  readonly getRoute: string;
+  readonly getPostPatchRoute: string;
+  readonly getResourcesRoute: string;
   readonly overrideAsReadonly: boolean;
   readonly updateRights: string;
   readonly writeRights: string;
   readonly paginatedHeading: string;
+  readonly retrieveOnModelView: boolean;
 
   total_rows: number;
   current_page: number;
@@ -69,9 +71,9 @@ export interface PaginationMeta {
 }
 
 export abstract class PaginatedEntity implements PaginationMeta {
-  readonly getRoute!: string;
+  readonly getResourcesRoute!: string;
   readonly overrideAsReadonly!: boolean;
-  readonly postPatchRoute!: string;
+  readonly getPostPatchRoute!: string;
   readonly metadata!: Record<string, ApplicationFormFieldMetaData>;
   resources!: ApplicationModelFields[];
   readonly updateRights!: string;
@@ -80,6 +82,7 @@ export abstract class PaginatedEntity implements PaginationMeta {
   readonly formHeadingOnCreate!: string;
   readonly formHeadingOnUpdate!: string;
   readonly formHeadingOnRead!: string;
+  readonly retrieveOnModelView!: boolean;
 
   isUpdatable(rights: string[]): boolean {
     return this.updateRights in rights;
@@ -147,7 +150,6 @@ export abstract class PaginatedEntity implements PaginationMeta {
         fields: fields,
         object: resource,
       });
-      // this.resources.push(cells);
     }
   }
 
@@ -173,9 +175,10 @@ export interface User extends ApplicationBaseObject {
 }
 
 export class TodoPagination extends PaginatedEntity {
-  readonly getRoute: string = "/todos";
+  readonly getResourcesRoute: string = "/todos";
   readonly overrideAsReadonly: boolean = false;
-  readonly postPatchRoute: string = "/todo";
+  readonly getPostPatchRoute: string = "/todo";
+  readonly retrieveOnModelView = false;
   readonly metadata: Record<string, ApplicationFormFieldMetaData> = {
     "UID": {
       title: "UID",
@@ -243,9 +246,9 @@ export class TodoPagination extends PaginatedEntity {
 }
 
 export class UsersPagination extends PaginatedEntity {
-  readonly getRoute: string = "/users";
+  readonly getResourcesRoute: string = "/users";
   readonly overrideAsReadonly: boolean = false;
-  readonly postPatchRoute: string = "/users";
+  readonly getPostPatchRoute: string = "/users";
   readonly metadata: Record<string, ApplicationFormFieldMetaData> = {
     "UID": {
       title: "UID",
@@ -345,6 +348,9 @@ export class UsersPagination extends PaginatedEntity {
   readonly formHeadingOnCreate = "Create User";
   readonly formHeadingOnUpdate = "Edit User";
   readonly formHeadingOnRead = "User Details";
+
+  // todo implement on model view
+  readonly retrieveOnModelView = true;
 
   idFromJson(value: ApplicationBaseObject): string {
     return `${value.id}`;
