@@ -1,3 +1,4 @@
+import {basicStringValidation, beforeTodayValidation, birthDateValidation} from "./base.ts";
 
 type ApplicationBaseField = string | number | boolean
   | Date | ApplicationBaseObject;
@@ -32,6 +33,7 @@ export interface ApplicationFormFieldMetaData {
 
   fromJson?(value: ApplicationBaseField): ApplicationBaseField;
   toStr(value: ApplicationBaseField): string;
+  fieldValidation(value: ApplicationBaseField): ApplicationBaseField | null;
 }
 
 export interface ApplicationField {
@@ -188,6 +190,9 @@ export class TodoPagination extends PaginatedEntity {
       jsonKey: "id",
       dumpOnCreate: false,
       dumpOnUpdate: true,
+      fieldValidation(value: string): string | null {
+        return basicStringValidation(value);
+      },
       toStr: (value: number) => {
         return `${value}`;
       }
@@ -198,6 +203,9 @@ export class TodoPagination extends PaginatedEntity {
       jsonKey: "date",
       dumpOnCreate: true,
       dumpOnUpdate: true,
+      fieldValidation(value: Date): Date | null {
+        return beforeTodayValidation(value);
+      },
       formOverrideAsReadOnly: false,
       formInputType: "DateInputField",
       toStr: (value: Date) => {
@@ -213,6 +221,9 @@ export class TodoPagination extends PaginatedEntity {
       jsonKey: "todo",
       dumpOnCreate: true,
       dumpOnUpdate: true,
+      fieldValidation(value: string): string | null {
+        return basicStringValidation(value);
+      },
       formOverrideAsReadOnly: false,
       formInputType: "TextInputField",
       toStr: (value: string) => value},
@@ -222,6 +233,9 @@ export class TodoPagination extends PaginatedEntity {
       jsonKey: "done",
       dumpOnCreate: true,
       dumpOnUpdate: true,
+      fieldValidation(value: boolean): boolean {
+        return value;
+      },
       formOverrideAsReadOnly: false,
       formInputType: "CheckBoxInputField",
       toStr: (value: boolean) => value ? "Yes" : "No"
@@ -257,6 +271,9 @@ export class UsersPagination extends PaginatedEntity {
       jsonKey: "id",
       dumpOnCreate: false,
       dumpOnUpdate: true,
+      fieldValidation(value: number): number {
+        return value;
+      },
       formInputType: "TextInputField",
       toStr: (value: string) => {
         return value;
@@ -268,6 +285,9 @@ export class UsersPagination extends PaginatedEntity {
       jsonKey: "staff_id",
       dumpOnCreate: true,
       dumpOnUpdate: true,
+      fieldValidation(value: string): string | null {
+        return basicStringValidation(value);
+      },
       formOverrideAsReadOnly: false,
       formInputType: "TextInputField",
       toStr: (value: string) => {
@@ -280,6 +300,9 @@ export class UsersPagination extends PaginatedEntity {
       jsonKey: "name",
       dumpOnCreate: true,
       dumpOnUpdate: true,
+      fieldValidation(value: string): string | null {
+        return basicStringValidation(value);
+      },
       formOverrideAsReadOnly: false,
       formInputType: "TextInputField",
       toStr: (value: string) => {
@@ -291,6 +314,9 @@ export class UsersPagination extends PaginatedEntity {
       showOnTable: true,
       jsonKey: "email",
       dumpOnCreate: true,
+      fieldValidation(value: string): string | null {
+        return basicStringValidation(value);
+      },
       dumpOnUpdate: true,
       formOverrideAsReadOnly: false,
       formInputType: "TextInputField",
@@ -304,6 +330,9 @@ export class UsersPagination extends PaginatedEntity {
       jsonKey: "joined",
       dumpOnCreate: true,
       dumpOnUpdate: true,
+      fieldValidation(value: Date): Date | null {
+        return beforeTodayValidation(value);
+      },
       formOverrideAsReadOnly: false,
       formInputType: "DateInputField",
       toStr: (value: Date) => {
@@ -321,6 +350,9 @@ export class UsersPagination extends PaginatedEntity {
       jsonKey: "created",
       dumpOnCreate: false,
       dumpOnUpdate: false,
+      fieldValidation(value: Date): Date | null {
+        return birthDateValidation(value);
+      },
       formInputType: "DateInputField",
       toStr: (value: Date) => {
         return value.toUTCString().replace("GMT", "");
@@ -335,6 +367,9 @@ export class UsersPagination extends PaginatedEntity {
       jsonKey: "enabled",
       dumpOnCreate: true,
       dumpOnUpdate: true,
+      fieldValidation(value: boolean): boolean {
+        return value;
+      },
       formOverrideAsReadOnly: false,
       formInputType: "CheckBoxInputField",
       toStr: (value: boolean) => value ? "Yes" : "No"

@@ -5,12 +5,12 @@ import type {Mode} from "../../models.ts";
 const props = defineProps<{
   hint: string
   initialValue?: Date | undefined
-  disabled?: boolean | null,
+  disabled: boolean,
   constant?: boolean | null,
 }>();
 
 const constant = props.constant ?? false;
-const disabled = props.disabled ?? false;
+const disabled = ref(props.disabled);
 const initialValue = props.initialValue ?? new Date();
 
 // Convert Date to YYYY-MM-DD format for input
@@ -40,7 +40,21 @@ defineExpose({
   },
   greyOut: () => {
   },
-  setMode: (mode: Mode) => {},
+  setMode: (mode: Mode) => {
+    switch (mode) {
+      case "Create":
+        value.value = dateToInputValue(new Date());
+        disabled.value = false;
+        break
+      case "Edit":
+        if(!constant) {
+          disabled.value = false;
+        }
+        break;
+      default:
+        throw "unimplemented"
+    }
+  },
   setValue: (value: string | Date | boolean) => {
 
   }

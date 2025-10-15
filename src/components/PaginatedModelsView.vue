@@ -115,6 +115,12 @@ function showResource(resource: ApplicationModelFields) {
   selectedResource = resource;
 }
 
+
+function onNew() {
+  selectedResource = null;
+  isOverlayOpen.value = true;
+}
+
 </script>
 
 <template>
@@ -136,6 +142,13 @@ function showResource(resource: ApplicationModelFields) {
   <AppRoot>
     <div class="py-2 w-full text-center font-bold text-gray-700 text-lg">
       {{ appModel.paginatedHeading }}
+    </div>
+    <div class="p-2 w-full text-end font-bold text-gray-700 text-lg">
+      <button class="mx-1 border-2 px-4 py-1 rounded-4xl  text-red-500
+       font-semibold border-red-500 hover:text-red-700 hover:border-red-700
+       transition-all duration-300 cursor-pointer" @click="onNew()">
+           New
+      </button>
     </div>
     <div class="overflow-x-auto rounded-lg border border-gray-300 mb-2">
       <table class="table-auto border-collapse w-full text-left text-sm">

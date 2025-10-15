@@ -7,11 +7,11 @@ import type {Mode} from "../../models.ts";
 const props = defineProps<{
   hint: string
   initialValue?: boolean
-  disabled?: boolean | null,
+  disabled: boolean,
 }>();
 
 const initialValue = props.initialValue ?? true;
-const disabled = props.disabled ?? false;
+const disabled = ref(props.disabled);
 const value = ref(initialValue);
 
 defineExpose({
@@ -20,7 +20,19 @@ defineExpose({
   },
   greyOut: () => {
   },
-  setMode: (mode: Mode) => {},
+  setMode: (mode: Mode) => {
+    switch (mode) {
+      case "Create":
+        value.value = true;
+        disabled.value = false;
+        break
+      case "Edit":
+        disabled.value = false;
+        break;
+      default:
+        throw "unimplemented"
+    }
+  },
   setValue: (value: string | Date | boolean) => {
 
   }

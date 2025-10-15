@@ -6,14 +6,14 @@ const props = defineProps<{
   hint: string
   initialValue?: string | number,
   autocomplete?: string | null,
-  disabled?: boolean | null,
+  disabled: boolean,
   constant?: boolean | null,
 }>();
 
 const initialValue = props.initialValue;
 const value = ref(initialValue ?? "");
 const autocomplete = props.autocomplete ?? "off";
-const disabled = props.disabled ?? false;
+const disabled = ref(props.disabled);
 const constant = props.constant ?? false;
 
 defineExpose({
@@ -22,7 +22,19 @@ defineExpose({
   },
   greyOut: () => {
   },
-  setMode: (mode: Mode) => {},
+  setMode: (mode: Mode) => {
+    switch (mode) {
+      case "Create":
+        value.value = "";
+        disabled.value = false;
+        break
+      case "Edit":
+        disabled.value = false;
+        break;
+      default:
+        throw "unimplemented"
+    }
+  },
   setValue: (value: string | Date | boolean) => {
 
   }

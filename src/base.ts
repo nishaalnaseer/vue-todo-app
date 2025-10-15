@@ -18,3 +18,22 @@ export function stopLoading() {
   overlay.classList.remove("flex");
   overlay.classList.add("hidden");
 }
+
+
+export function basicStringValidation(value: string): string | null {
+  const stripped = value.trim();
+
+  if(stripped === "") {
+    return null;
+  }
+  return stripped;
+}
+
+
+export function birthDateValidation(value: Date): Date | null {
+  return value;
+}
+
+export function beforeTodayValidation(value: Date): Date | null {
+  return value;
+}

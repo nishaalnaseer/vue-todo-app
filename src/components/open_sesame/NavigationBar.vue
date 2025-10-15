@@ -14,6 +14,9 @@ interface Props {
 const props = defineProps<Props>();
 const dimensions = props.dimensions ?? 'h-[26px] w-[26px]';
 
+const currentSegment = route.path.split("/")[1] ?? "";
+const toSegment = props.to.split("/")[1] ?? "";
+
 function getSvg(color: string, props: Props): string {
   return `/src/assets/svgs/${props.icon}-${color}.svg`;
 }
@@ -21,7 +24,7 @@ function getSvg(color: string, props: Props): string {
 function mainClass(): string {
   let base = `px-6 flex flex-row w-full justify-center items-center
                rounded-sm font-semibold h-[40px] `;
-  if(route.path === props.to) {
+  if(toSegment === currentSegment) {
     base += ` text-white bg-red-700`;
   } else {
     base += ` hover:bg-red-700 group text-black hover:text-white cursor-pointer`;
@@ -31,16 +34,16 @@ function mainClass(): string {
 
 function getWhiteSVGClass(): string {
   let base = "select-none";
-  if(route.path === props.to) {
-    base += " block"
+  if(toSegment === currentSegment) {
+    base += ""
   } else {
     base += " hidden group-hover:block";
   }
   return base;
 }
 
-function displayBlack(): boolean {
-  return route.path !== props.to;
+function displayBlackSvg(): boolean {
+  return toSegment === currentSegment;
 }
 
 
@@ -48,13 +51,13 @@ function displayBlack(): boolean {
 
 <template>
   <component
-    :is="displayBlack() ? RouterLink : 'div'"
-    :to="displayBlack() ? props.to : undefined">
+    :is="!displayBlackSvg() ? RouterLink : 'div'"
+    :to="!displayBlackSvg() ? props.to : undefined">
     <button class="w-full px-2 py-0.25">
       <div :class="mainClass()">
         <span class="px-2">{{ props.label }}</span>
         <img
-          v-if="displayBlack()"
+          v-if="!displayBlackSvg()"
           :src="getSvg('b', props)"
           :class="`${dimensions} group-hover:hidden select-none`"
           alt=""

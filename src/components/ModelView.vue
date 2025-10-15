@@ -1,8 +1,7 @@
 <script setup lang="ts">
-
 import {
   PaginatedEntity, type FormFieldType,
-  type ApplicationModelFields, type Mode
+  type ApplicationModelFields, type Mode, type ApplicationFormFieldMetaData
 } from "../models.ts";
 import {startLoading, stopLoading} from "../base.ts";
 import CheckBoxInputField from "./field_components/CheckBoxInputField.vue";
@@ -14,7 +13,6 @@ import {apiRoot} from "../konstants.ts";
 type FormComponents = typeof TextInputField | typeof DateInputField
     | typeof CheckBoxInputField;
 
-
 interface FieldComponentInstance {
   getValue: () => string | Date | boolean;
   errOut: () => void;
@@ -23,12 +21,10 @@ interface FieldComponentInstance {
   setValue: (value: string | Date | boolean) => void;
 }
 
-const mode: Ref<Mode> = ref("Edit");
-
 interface MountedComponent {
   component: FormComponents;
+  metadata: ApplicationFormFieldMetaData,
   props: Record<any, any>;
-  ref: Ref<FieldComponentInstance | null>;  // Changed this line
 }
 
 const props = defineProps<{
@@ -43,31 +39,48 @@ const componentMap: Record<FormFieldType, FormComponents> = {
   "DateInputField": DateInputField,
   "CheckBoxInputField": CheckBoxInputField,
 } as const;
+
 const mountedComponents: Record<string, MountedComponent> = {};
+// Store refs separately
+const componentRefs: Record<string, Ref<FieldComponentInstance | null>> = {};
+
+const mode: Ref<Mode> = ref(props.object != null ? "View" : "Create");
+
 for (const [key, meta] of Object.entries(appModel.value.metadata)) {
   const fieldData = object.value?.fields.find(f => f.title === key);
+  let initialValue = null;
   if(fieldData == undefined) {
-    console.error(`Field data undefined for title ${key}`);
-    continue;
+    if(!meta.dumpOnCreate) {
+      continue;
+    }
+
+  } else {
+    initialValue = fieldData!.value;
   }
+
+  componentRefs[key] = ref(null); // Create ref for each component
   mountedComponents[key] = {
     component: componentMap[meta.formInputType],
-    ref: ref(null),
+    metadata: meta,
     props: {
       hint: meta.title,
-      disabled: meta.formOverrideAsReadOnly,
+      disabled: (meta.formOverrideAsReadOnly || mode.value == 'View'),
       constant: meta.formOverrideAsReadOnly,
-      initialValue: fieldData!.value,
+      initialValue: initialValue,
     },
   };
 }
 
+// Function to set ref
+const setComponentRef = (key: string) => (el: any) => {
+  componentRefs[key]!.value = el;
+};
 
 function getCreateData(): Record<string, any> {
   const values: Record<string, any> = {};
-  for (const [key, mounted] of Object.entries(mountedComponents)) {
-    if (mounted.ref.value && 'getValue' in mounted.ref.value) {
-
+  for (const [key, _] of Object.entries(mountedComponents)) {
+    const ref = componentRefs[key]?.value;
+    if (ref) {
       const meta = appModel.value.metadata[key];
       if(!meta) {
         console.error(`Metadata for key ${key} not found`)
@@ -78,18 +91,20 @@ function getCreateData(): Record<string, any> {
         continue;
       }
 
-      values[key] = mounted.ref.value.getValue();
+      values[meta.jsonKey] = ref.getValue();
+    } else {
+      console.log(`Ref value for key ${key} not found`);
     }
   }
-  console.log(values);
   return values;
 }
 
 function getUpdateData(): Record<string, any> {
   const values: Record<string, any> = {};
-  for (const [key, mounted] of Object.entries(mountedComponents)) {
-    // mounted.ref.
-    if (mounted.ref.value && 'getValue' in mounted.ref.value) {
+  let erred = false;
+  for (const [key, _] of Object.entries(mountedComponents)) {
+    const ref = componentRefs[key]?.value;
+    if (ref) {
       const meta = appModel.value.metadata[key];
       if(!meta) {
         console.error(`Metadata for key ${key} not found`);
@@ -100,15 +115,28 @@ function getUpdateData(): Record<string, any> {
         continue;
       }
 
-      values[key] = mounted.ref.value.getValue();
+      const value = meta.fieldValidation(ref.getValue());
+      if(value === undefined) {
+        erred = erred || true;
+        ref.errOut();
+        console.error(`failed validation for ${key}`);
+        continue;
+      } else {
+        ref.greyOut();
+      }
+
+      values[meta.jsonKey] = ref.getValue();
     } else {
       console.log(`Ref value for key ${key} not found`);
     }
   }
-  console.log(values);
+
+  if(erred) {
+    throw "Failed to validate at least one field"
+  }
+
   return values;
 }
-
 
 async function onSave() {
   let data = {};
@@ -154,8 +182,8 @@ async function onSave() {
   }
 }
 
-function getHeading(): string {
-  switch (mode.value) {
+function getHeading(mode: string): string {
+  switch (mode) {
     case "View":
       return appModel.value.formHeadingOnRead;
     case "Edit":
@@ -168,36 +196,46 @@ function getHeading(): string {
 }
 
 
+function setMode(_mode: Mode) {
+  mode.value = _mode;
+  for (const [_, value] of Object.entries(componentRefs)) {
+    value.value?.setMode(_mode);
+  }
+}
+
 </script>
 
 <template>
 <div class="">
   <div class="w-full flex justify-center">
     <div class="text-xl font-semibold text-gray-700 mb-2">
-      {{ getHeading() }}
+      {{ getHeading(mode) }}
     </div>
   </div>
 
   <div class="flex flex-row-reverse">
-    <button class="mx-1 border-2 px-4 py-1 rounded-4xl text-red-500
+    <button v-show="mode === 'View'"
+            class="mx-1 border-2 px-4 py-1 rounded-4xl text-red-500
        font-semibold border-red-500 hover:text-red-700 hover:border-red-700
-       transition-all duration-300 cursor-pointer">
+       transition-all duration-300 cursor-pointer" @click="setMode('Edit')">
          Edit
     </button>
-    <button class="mx-1 border-2 px-4 py-1 rounded-4xl  text-red-500
+    <button v-show="mode !== 'Create'"
+            class="mx-1 border-2 px-4 py-1 rounded-4xl  text-red-500
        font-semibold border-red-500 hover:text-red-700 hover:border-red-700
-       transition-all duration-300 cursor-pointer">
+       transition-all duration-300 cursor-pointer" @click="setMode('Create')">
          New
     </button>
   </div>
 
   <div class="flex flex-col w-full space-y-1">
-    <component
-      v-for="(field, key) in mountedComponents"
-      :key="key"
-      :ref="field.ref"
-      :is="(field.component as Component)"
-      v-bind="field.props"/>
+    <template v-for="(field, key) in mountedComponents" :key="key">
+      <component
+        v-if="mode != 'Create' || field.metadata.dumpOnCreate"
+        :ref="setComponentRef(key as string)"
+        :is="(field.component as Component)"
+        v-bind="field.props"/>
+    </template>
 
     <div class="flex justify-center pt-2">
       <button class="border px-4 py-2 rounded-lg bg-red-700 text-white
