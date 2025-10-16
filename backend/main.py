@@ -1,3 +1,4 @@
+from pydantic import Field
 from datetime import datetime
 from typing import Annotated, TypeVar, Generic, List
 
@@ -24,7 +25,7 @@ class Todo(BaseModel):
 
 class User(BaseModel):
     id: int = 0
-    staff_id: str
+    staff_id: str = Field(..., min_length=5)
     name: str
     created: datetime = datetime.now()
     joined: datetime

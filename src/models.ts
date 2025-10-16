@@ -31,6 +31,10 @@ export interface ApplicationFormFieldMetaData {
   dumpOnCreate: boolean;
   dumpOnUpdate: boolean;
 
+  positionRow: number;
+  positionColumn: number;
+  flex: number;
+
   fromJson?(value: ApplicationBaseField): ApplicationBaseField;
   toStr(value: ApplicationBaseField): string;
   fieldValidation(value: ApplicationBaseField): ApplicationBaseField | null;
@@ -63,7 +67,6 @@ export interface PaginationMeta {
   total_rows: number;
   current_page: number;
   rows_per_page: number;
-
 
   isWriteable(rights: string[]): boolean;
   isUpdatable(rights: string[]): boolean;
@@ -189,6 +192,11 @@ export class TodoPagination extends PaginatedEntity {
       jsonKey: "id",
       dumpOnCreate: false,
       dumpOnUpdate: true,
+
+      positionRow: 0,
+      positionColumn: 0,
+      flex: 12,
+
       fieldValidation(value: string): string | null {
         return basicStringValidation(value);
       },
@@ -202,6 +210,11 @@ export class TodoPagination extends PaginatedEntity {
       jsonKey: "date",
       dumpOnCreate: true,
       dumpOnUpdate: true,
+
+      positionRow: 1,
+      positionColumn: 0,
+      flex: 12,
+
       fieldValidation(value: Date): Date | null {
         return beforeTodayValidation(value);
       },
@@ -219,6 +232,11 @@ export class TodoPagination extends PaginatedEntity {
       showOnTable: true,
       jsonKey: "todo",
       dumpOnCreate: true,
+
+      positionRow: 2,
+      positionColumn: 0,
+      flex: 12,
+
       dumpOnUpdate: true,
       fieldValidation(value: string): string | null {
         return basicStringValidation(value);
@@ -231,6 +249,11 @@ export class TodoPagination extends PaginatedEntity {
       showOnTable: true,
       jsonKey: "done",
       dumpOnCreate: true,
+
+      positionRow: 3,
+      positionColumn: 0,
+      flex: 12,
+
       dumpOnUpdate: true,
       fieldValidation(value: boolean): boolean {
         return value;
@@ -276,7 +299,12 @@ export class UsersPagination extends PaginatedEntity {
       formInputType: "TextInputField",
       toStr: (value: string) => {
         return value;
-      }
+      },
+
+      positionRow: 0,
+      positionColumn: 0,
+      flex: 12,
+
     },
     "Staff ID": {
       title: "Staff ID",
@@ -291,7 +319,11 @@ export class UsersPagination extends PaginatedEntity {
       formInputType: "TextInputField",
       toStr: (value: string) => {
         return value;
-      }
+      },
+
+      positionRow: 1,
+      positionColumn: 0,
+      flex: 6,
     },
     "Name": {
       title: "Name",
@@ -306,7 +338,11 @@ export class UsersPagination extends PaginatedEntity {
       formInputType: "TextInputField",
       toStr: (value: string) => {
         return value;
-      }
+      },
+
+      positionRow: 2,
+      positionColumn: 0,
+      flex: 12,
     },
     "Email": {
       title: "Email",
@@ -321,7 +357,11 @@ export class UsersPagination extends PaginatedEntity {
       formInputType: "TextInputField",
       toStr: (value: string) => {
         return value;
-      }
+      },
+
+      positionRow: 3,
+      positionColumn: 0,
+      flex: 12,
     },
     "Joined Date": {
       title: "Joined Date",
@@ -340,7 +380,11 @@ export class UsersPagination extends PaginatedEntity {
       },
       fromJson(value: string | number): ApplicationBaseField {
         return new Date(value);
-      }
+      },
+
+      positionRow: 1,
+      positionColumn: 1,
+      flex: 6,
     },
     "User Created": {
       title: "User Created",
@@ -358,7 +402,11 @@ export class UsersPagination extends PaginatedEntity {
       },
       fromJson(value: string | number): ApplicationBaseField {
         return new Date(value);
-      }
+      },
+
+      positionRow: 5,
+      positionColumn: 0,
+      flex: 12,
     },
     "Enabled": {
       title: "Enabled",
@@ -371,7 +419,11 @@ export class UsersPagination extends PaginatedEntity {
       },
       formOverrideAsReadOnly: false,
       formInputType: "CheckBoxInputField",
-      toStr: (value: boolean) => value ? "Yes" : "No"
+      toStr: (value: boolean) => value ? "Yes" : "No",
+
+      positionRow: 4,
+      positionColumn: 0,
+      flex: 12,
     },
   };
 

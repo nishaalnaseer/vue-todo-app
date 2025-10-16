@@ -8,7 +8,7 @@ import {
   type ApplicationBaseObject,
   type ApplicationBaseField
 } from "../models.ts";
-import {startLoading, stopLoading} from "../base.ts";
+import {responseToStr, startLoading, stopLoading} from "../base.ts";
 import CheckBoxInputField from "./field_components/CheckBoxInputField.vue";
 import TextInputField from "./field_components/TextInputField.vue";
 import {type Component, type Ref, ref} from "vue";
@@ -38,8 +38,10 @@ const props = defineProps<{
   refreshPage: (showLoading: boolean) => Promise<void>;
 }>();
 
+const orderedFields = orderFields(props.appModel.metadata);
 const appModel = ref(props.appModel);
 const object = ref(props.object);
+const requestErr = ref("");
 const componentMap: Record<FormFieldType, FormComponents> = {
   "TextInputField": TextInputField,
   "DateInputField": DateInputField,
@@ -188,7 +190,7 @@ async function onSave() {
       }
     );
     if(response.status != 201) {
-      // todo
+      requestErr.value = await responseToStr(response);
     } else {
       const resource: ApplicationBaseObject = await response.json();
       const fields = [];
@@ -232,11 +234,12 @@ async function onSave() {
       props.refreshPage(false).then(_ => _);
     }
   } catch (exc) {
-    // todo
+    requestErr.value = "Error connecting to server";
     console.error("error sending request");
   } finally {
     stopLoading();
   }
+  console.log(requestErr.value);
 }
 
 function getHeading(mode: string): string {
@@ -252,12 +255,30 @@ function getHeading(mode: string): string {
   }
 }
 
-// todo server side err handling
+
 function setMode(_mode: Mode) {
   mode.value = _mode;
   for (const [_, value] of Object.entries(componentRefs)) {
     value.value?.setMode(_mode);
   }
+}
+
+
+// todo rows
+function orderFields(
+  metadata: Record<string, ApplicationFormFieldMetaData>
+): ApplicationFormFieldMetaData[][] {
+  const rows: ApplicationFormFieldMetaData[][] = [];
+
+  Object.values(metadata).forEach(field => {
+    const row = field.positionRow;
+    const col = field.positionColumn;
+
+    if (!rows[row]) rows[row] = [];
+    rows[row][col] = field;
+  });
+
+  return rows;
 }
 
 </script>
@@ -294,6 +315,8 @@ function setMode(_mode: Mode) {
         v-bind="field.props"/>
     </template>
 
+    <div v-if="requestErr !== ''"
+         class="text-center text-red-600 font-semibold flex">{{requestErr}}</div>
     <div class="flex justify-center pt-2" v-if="mode != 'View'">
       <button class="border px-4 py-2 rounded-lg bg-red-700 text-white
        font-semibold border-red-700 hover:bg-red-800
