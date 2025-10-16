@@ -1,6 +1,6 @@
 import {basicStringValidation, beforeTodayValidation, birthDateValidation} from "./base.ts";
 
-type ApplicationBaseField = string | number | boolean
+export type ApplicationBaseField = string | number | boolean
   | Date | ApplicationBaseObject;
 
 export interface ApplicationBaseObject {
@@ -128,7 +128,6 @@ export abstract class PaginatedEntity implements PaginationMeta {
       const fields = [];
       for (const [key, meta] of
         Object.entries(this.metadata)) {
-        meta.jsonKey;
         let fieldValue = resource[meta.jsonKey];
 
         if(fieldValue == undefined) {

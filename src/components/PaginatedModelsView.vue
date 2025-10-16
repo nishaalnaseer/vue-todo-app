@@ -32,12 +32,14 @@ function closeOverlay() {
 }
 
 
-async function fetchData() {
+async function fetchData(showLoading: boolean = true) {
   const pageNumber = route.params.pageNumber;
   const pageSize = route.params.pageSize;
   const url = `${apiRoot}${appModel.value.getResourcesRoute}/${pageNumber}/${pageSize}`
   try {
-    startLoading();
+    if(showLoading) {
+      startLoading();
+    }
 
     const response = await fetch(url);
     if(response.status != 200) {
@@ -50,7 +52,9 @@ async function fetchData() {
   } catch (exc) {
     console.error('Error loading data: ', exc)
   } finally {
-    stopLoading();
+    if(showLoading) {
+      stopLoading();
+    }
   }
 }
 
@@ -136,6 +140,7 @@ function onNew() {
         v-if="componentMap[segment as keyof typeof componentMap]"
         :is="componentMap[segment as keyof typeof componentMap]"
         :appModel="appModel"
+        :refreshPage="fetchData"
         :object="selectedResource"/>
     </div>
   </div>

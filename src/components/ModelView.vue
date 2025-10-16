@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import {
-  PaginatedEntity, type FormFieldType,
-  type ApplicationModelFields, type Mode, type ApplicationFormFieldMetaData
+  PaginatedEntity,
+  type FormFieldType,
+  type ApplicationModelFields,
+  type Mode,
+  type ApplicationFormFieldMetaData,
+  type ApplicationBaseObject,
+  type ApplicationBaseField
 } from "../models.ts";
 import {startLoading, stopLoading} from "../base.ts";
 import CheckBoxInputField from "./field_components/CheckBoxInputField.vue";
@@ -18,7 +23,7 @@ interface FieldComponentInstance {
   errOut: () => void;
   greyOut: () => void;
   setMode: (mode: Mode) => void;
-  setValue: (value: string | Date | boolean) => void;
+  setValue: (value: ApplicationBaseField) => void;
 }
 
 interface MountedComponent {
@@ -30,6 +35,7 @@ interface MountedComponent {
 const props = defineProps<{
   appModel: PaginatedEntity
   object: ApplicationModelFields | null,
+  refreshPage: (showLoading: boolean) => Promise<void>;
 }>();
 
 const appModel = ref(props.appModel);
@@ -49,7 +55,7 @@ const mode: Ref<Mode> = ref(props.object != null ? "View" : "Create");
 for (const [key, meta] of Object.entries(appModel.value.metadata)) {
   const fieldData = object.value?.fields.find(f => f.title === key);
   let initialValue = null;
-  if(fieldData == undefined) {
+  if(fieldData == null) {
     if(!meta.dumpOnCreate) {
       continue;
     }
@@ -76,14 +82,15 @@ const setComponentRef = (key: string) => (el: any) => {
   componentRefs[key]!.value = el;
 };
 
-function getCreateData(): Record<string, any> {
+function getCreateData(): Record<string, any> | null {
   const values: Record<string, any> = {};
+  let erred = false;
   for (const [key, _] of Object.entries(mountedComponents)) {
     const ref = componentRefs[key]?.value;
     if (ref) {
       const meta = appModel.value.metadata[key];
       if(!meta) {
-        console.error(`Metadata for key ${key} not found`)
+        console.error(`Metadata for key ${key} not found`);
         continue;
       }
 
@@ -91,11 +98,22 @@ function getCreateData(): Record<string, any> {
         continue;
       }
 
-      values[meta.jsonKey] = ref.getValue();
+      const value = meta.fieldValidation(ref.getValue());
+      if(value === null) {
+        erred = erred || true;
+        ref.errOut();
+      } else {
+        ref.greyOut();
+        values[meta.jsonKey] = value;
+      }
     } else {
       console.log(`Ref value for key ${key} not found`);
     }
   }
+  if(erred) {
+    return null;
+  }
+
   return values;
 }
 
@@ -172,7 +190,46 @@ async function onSave() {
     if(response.status != 201) {
       // todo
     } else {
+      const resource: ApplicationBaseObject = await response.json();
+      const fields = [];
+      for (const [key, meta] of
+        Object.entries(appModel.value.metadata)) {
+        let fieldValue = resource[meta.jsonKey];
 
+        if(fieldValue == null) {
+          console.error(`field value for ${key} is ${fieldValue}`);
+          continue;
+        }
+
+        if(meta.fromJson != null) {
+          fieldValue = meta.fromJson(fieldValue);
+        }
+
+        fields.push(
+          {
+            title: meta.title,
+            value: fieldValue,
+          },
+        )
+      }
+
+      for (const [key, _] of Object.entries(mountedComponents)) {
+        const fieldData = fields.find(f => f.title === key);
+        const ref = componentRefs[key]?.value;
+        if(!ref) {
+          console.error(`Ref for key ${key} not found!`);
+          continue;
+        }
+        if(!fieldData) {
+          console.error(`fieldData for key ${key} not found!`);
+          continue;
+        }
+
+        ref.setValue(fieldData.value);
+      }
+
+      mode.value = 'View';
+      props.refreshPage(false).then(_ => _);
     }
   } catch (exc) {
     // todo
@@ -195,8 +252,7 @@ function getHeading(mode: string): string {
   }
 }
 
-// todo read data from server into UI
-// todo user input error handling
+// todo server side err handling
 function setMode(_mode: Mode) {
   mode.value = _mode;
   for (const [_, value] of Object.entries(componentRefs)) {

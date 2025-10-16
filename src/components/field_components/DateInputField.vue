@@ -54,8 +54,8 @@ defineExpose({
         throw "unimplemented"
     }
   },
-  setValue: (value: string | Date | boolean) => {
-
+  setValue: (_value: string) => {
+    value.value = dateToInputValue(new Date(_value));
   }
 });
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {ref} from "vue";
-import type {Mode} from "../../models.ts";
+import type {Mode, ApplicationBaseField} from "../../models.ts";
 
 const props = defineProps<{
   hint: string,
@@ -34,7 +34,7 @@ defineExpose({
         throw "unimplemented"
     }
   },
-  setValue: (value: string | Date | boolean) => {
+  setValue: (value: ApplicationBaseField) => {
 
   }
 });
