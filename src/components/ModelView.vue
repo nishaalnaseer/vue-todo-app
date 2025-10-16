@@ -99,7 +99,7 @@ function getCreateData(): Record<string, any> {
   return values;
 }
 
-function getUpdateData(): Record<string, any> {
+function getUpdateData(): Record<string, any> | null {
   const values: Record<string, any> = {};
   let erred = false;
   for (const [key, _] of Object.entries(mountedComponents)) {
@@ -116,30 +116,26 @@ function getUpdateData(): Record<string, any> {
       }
 
       const value = meta.fieldValidation(ref.getValue());
-      if(value === undefined) {
+      if(value === null) {
         erred = erred || true;
         ref.errOut();
-        console.error(`failed validation for ${key}`);
-        continue;
       } else {
         ref.greyOut();
+        values[meta.jsonKey] = value;
       }
-
-      values[meta.jsonKey] = ref.getValue();
     } else {
       console.log(`Ref value for key ${key} not found`);
     }
   }
-
   if(erred) {
-    throw "Failed to validate at least one field"
+    return null;
   }
 
   return values;
 }
 
 async function onSave() {
-  let data = {};
+  let data: Record<string, any> | null = {};
   let method = "";
   switch (mode.value) {
     case "Create":
@@ -155,6 +151,10 @@ async function onSave() {
     default:
       throw "Unimplemented switch case statement onSave";
   }
+  if(!data) {
+    return;
+  }
+
   startLoading();
 
   try {
@@ -195,7 +195,8 @@ function getHeading(mode: string): string {
   }
 }
 
-
+// todo read data from server into UI
+// todo user input error handling
 function setMode(_mode: Mode) {
   mode.value = _mode;
   for (const [_, value] of Object.entries(componentRefs)) {
@@ -237,7 +238,7 @@ function setMode(_mode: Mode) {
         v-bind="field.props"/>
     </template>
 
-    <div class="flex justify-center pt-2">
+    <div class="flex justify-center pt-2" v-if="mode != 'View'">
       <button class="border px-4 py-2 rounded-lg bg-red-700 text-white
        font-semibold border-red-700 hover:bg-red-800
        transition-all duration-300 cursor-pointer" @click="onSave()">

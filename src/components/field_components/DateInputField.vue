@@ -12,6 +12,7 @@ const props = defineProps<{
 const constant = props.constant ?? false;
 const disabled = ref(props.disabled);
 const initialValue = props.initialValue ?? new Date();
+const erred = ref(false);
 
 // Convert Date to YYYY-MM-DD format for input
 function dateToInputValue(date: Date): string {
@@ -36,10 +37,8 @@ const handleInput = (event: Event) => {
 
 defineExpose({
   getValue: () => new Date(value.value),
-  errOut: () => {
-  },
-  greyOut: () => {
-  },
+  errOut: () => erred.value = true,
+  greyOut: () => erred.value = false,
   setMode: (mode: Mode) => {
     switch (mode) {
       case "Create":
@@ -78,8 +77,12 @@ defineExpose({
          :value="value"
          @input="handleInput"
          autocomplete="off"
-         class="p-2 border-2 border-gray-300 focus:border-gray-500
-         transition-colors focus:outline-none rounded-lg text-gray-700
-         [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none
-         [&::-webkit-inner-spin-button]:appearance-none w-full">
+         :class="['p-2 border-2',
+           'transition-colors focus:outline-none rounded-lg text-gray-700',
+           '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none',
+           '[&::-webkit-inner-spin-button]:appearance-none w-full',
+           erred
+             ? 'border-red-300 focus:border-red-500'
+             : 'border-gray-300 focus:border-gray-500'
+         ]">
 </template>

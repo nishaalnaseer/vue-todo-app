@@ -3,7 +3,7 @@ import {ref} from "vue";
 import type {Mode} from "../../models.ts";
 
 const props = defineProps<{
-  hint: string
+  hint: string,
   initialValue?: string | number,
   autocomplete?: string | null,
   disabled: boolean,
@@ -15,13 +15,12 @@ const value = ref(initialValue ?? "");
 const autocomplete = props.autocomplete ?? "off";
 const disabled = ref(props.disabled);
 const constant = props.constant ?? false;
+const erred = ref(false);
 
 defineExpose({
   getValue: () => value.value,
-  errOut: () => {
-  },
-  greyOut: () => {
-  },
+  errOut: () => erred.value = true,
+  greyOut: () => erred.value = false,
   setMode: (mode: Mode) => {
     switch (mode) {
       case "Create":
@@ -53,10 +52,14 @@ defineExpose({
       v-if="!constant"
       v-model="value"
       :disabled="disabled"
-      class="p-2 border-2 border-gray-300 focus:border-gray-500
-      transition-colors focus:outline-none rounded-lg text-gray-700
-      [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none
-      [&::-webkit-inner-spin-button]:appearance-none w-full"
+      :class="[
+        'p-2 border-2 transition-colors focus:outline-none rounded-lg text-gray-700',
+        '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none',
+        '[&::-webkit-inner-spin-button]:appearance-none w-full',
+        erred
+          ? 'border-red-300 focus:border-red-500'
+          : 'border-gray-300 focus:border-gray-500'
+      ]"
       :autocomplete="autocomplete">
   </div>
 

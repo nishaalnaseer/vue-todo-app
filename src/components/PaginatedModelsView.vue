@@ -127,7 +127,7 @@ function onNew() {
   <div
     v-if="isOverlayOpen"
     @click.self="closeOverlay"
-    class="fixed inset-0 bg-black/50 backdrop-blur-sm
+    class="fixed inset-0 bg-black/50 backdrop-blur-xs
     flex items-center justify-center z-50 " style="overflow: auto;">
     <div class="bg-white rounded-lg p-4 w-128 max-h-[90vh] overflow-y-auto
     flex flex-col"

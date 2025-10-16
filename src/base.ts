@@ -26,6 +26,7 @@ export function basicStringValidation(value: string): string | null {
   if(stripped === "") {
     return null;
   }
+  console.log(`validated = ${stripped}`);
   return stripped;
 }
 
