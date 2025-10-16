@@ -97,10 +97,6 @@ export abstract class PaginatedEntity implements PaginationMeta {
     return this.writeRights in rights;
   }
 
-  // onResponse(_: Response): void {
-  //   throw "unimplemented on response";
-  // }
-
   toStr(cell: ApplicationField): string {
     const header = this.metadata[cell.title];
     if(!header) {
@@ -384,7 +380,7 @@ export class UsersPagination extends PaginatedEntity {
 
       positionRow: 1,
       positionColumn: 1,
-      flex: 6,
+      flex: 12,
     },
     "User Created": {
       title: "User Created",

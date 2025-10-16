@@ -192,6 +192,7 @@ async function onSave() {
     if(response.status != 201) {
       requestErr.value = await responseToStr(response);
     } else {
+      requestErr.value = "";
       const resource: ApplicationBaseObject = await response.json();
       const fields = [];
       for (const [key, meta] of
@@ -264,7 +265,6 @@ function setMode(_mode: Mode) {
 }
 
 
-// todo rows
 function orderFields(
   metadata: Record<string, ApplicationFormFieldMetaData>
 ): ApplicationFormFieldMetaData[][] {
@@ -307,16 +307,22 @@ function orderFields(
   </div>
 
   <div class="flex flex-col w-full space-y-1">
-    <template v-for="(field, key) in mountedComponents" :key="key">
-      <component
-        v-if="mode != 'Create' || field.metadata.dumpOnCreate"
-        :ref="setComponentRef(key as string)"
-        :is="(field.component as Component)"
-        v-bind="field.props"/>
-    </template>
-
+    <div v-for="(row, rowIndex) in orderedFields">
+      <div class="flex gap-2" :key="rowIndex">
+        <template v-for="field in row" :key="field.jsonKey">
+          <component
+            v-if="mode != 'Create' || field.dumpOnCreate"
+            :ref="setComponentRef(field.title)"
+            :is="componentMap[field.formInputType] as Component"
+            v-bind="mountedComponents[field.title]!.props"
+          />
+        </template>
+      </div>
+    </div>
     <div v-if="requestErr !== ''"
-         class="text-center text-red-600 font-semibold flex">{{requestErr}}</div>
+         class="justify-center text-red-600 font-semibold flex w-full">
+      {{requestErr}}
+    </div>
     <div class="flex justify-center pt-2" v-if="mode != 'View'">
       <button class="border px-4 py-2 rounded-lg bg-red-700 text-white
        font-semibold border-red-700 hover:bg-red-800

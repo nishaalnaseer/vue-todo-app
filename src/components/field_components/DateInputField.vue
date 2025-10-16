@@ -63,26 +63,29 @@ defineExpose({
 </script>
 
 <template>
-  <div>
-    <span class="text-gray-800 text-lg font-semibold">{{ props.hint }}</span>
-    <span class="text-gray-800 text-lg font-semibold pr-2" v-if="constant">:</span>
-    <span class="text-gray-800 text-lg" v-if="constant">
-      {{ parseDate(initialValue) }}
-    </span>
+  <div class="w-full flex-col">
+    <div>
+      <span class="text-gray-800 text-lg font-semibold">{{ props.hint }}</span>
+      <span class="text-gray-800 text-lg font-semibold pr-2" v-if="constant">:</span>
+      <span class="text-gray-800 text-lg" v-if="constant">
+        {{ parseDate(initialValue) }}
+      </span>
+    </div>
+    <input
+        v-if="!constant" type="date"
+        min="2024-01-01"
+        max="2025-12-31"
+        :disabled="disabled"
+        :value="value"
+        @input="handleInput"
+        autocomplete="off"
+        :class="['p-2 border-2',
+          'transition-colors focus:outline-none rounded-lg text-gray-700',
+          '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none',
+          '[&::-webkit-inner-spin-button]:appearance-none w-full',
+          erred
+            ? 'border-red-300 focus:border-red-500'
+            : 'border-gray-300 focus:border-gray-500'
+        ]">
   </div>
-  <input v-if="!constant" type="date"
-         min="2024-01-01"
-         max="2025-12-31"
-         :disabled="disabled"
-         :value="value"
-         @input="handleInput"
-         autocomplete="off"
-         :class="['p-2 border-2',
-           'transition-colors focus:outline-none rounded-lg text-gray-700',
-           '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none',
-           '[&::-webkit-inner-spin-button]:appearance-none w-full',
-           erred
-             ? 'border-red-300 focus:border-red-500'
-             : 'border-gray-300 focus:border-gray-500'
-         ]">
 </template>

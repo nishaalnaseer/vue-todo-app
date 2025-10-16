@@ -42,7 +42,7 @@ defineExpose({
 </script>
 
 <template>
-  <div>
+  <div class="w-full">
     <div class="text-xl flex justify-center ">
       <label class="flex flex-row cursor-pointer hover:bg-red-50
       rounded-sm items-center space-x-2 select-none">
