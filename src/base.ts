@@ -10,6 +10,12 @@ export interface PydanticError {
   ctx: CTX;
 }
 
+export interface ErrorFromServer {
+  jsonKey: string;
+  message: string;
+}
+
+
 export function startLoading() {
   const overlay = document.getElementById("loading-overlay");
   if(!overlay) {
@@ -49,30 +55,42 @@ export function beforeTodayValidation(value: Date): Date | null {
   return value;
 }
 
-export async function responseToStr(response: Response): Promise<string> {
-  if(response.status < 400) return "";
+export async function responseToStr(response: Response): Promise<ErrorFromServer[]> {
+  if(response.status < 400) return [];
   if(response.status == 401) {
-    return "You are not logged in";
+    return [{
+      jsonKey: "",
+      message: "You have been logged out"
+    }];
   }
 
   if(response.status === 500) {
-    return await response.text();
+    return [{
+      jsonKey: "",
+      message: await response.text()
+    }];
   }
   const content = await response.json();
 
   const detail: any = content.detail;
   if(response.status === 422) {
     if (typeof detail === "string") {
-      return detail;
+      return [{
+        jsonKey: "",
+        message: detail
+      }];
     } else {
+      const _errors: ErrorFromServer[] = [];
       const errors: PydanticError[] = detail;
-      const errText: string[] = [];
       for(let err of errors) {
-        errText.push(`${err.loc[1]}:  ${err.msg}`);
+        _errors.push({
+          jsonKey: err.loc[1] ?? "",
+          message: err.msg
+        });
       }
-      return errText.join("\n");
+      return _errors;
     }
   }
 
-  return detail ?? "";
+  return [];
 }

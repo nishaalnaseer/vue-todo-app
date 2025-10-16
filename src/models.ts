@@ -64,6 +64,8 @@ export interface PaginationMeta {
   readonly paginatedHeading: string;
   readonly retrieveOnModelView: boolean;
 
+  readonly jsonKeyMap: Record<string, string>;
+
   total_rows: number;
   current_page: number;
   rows_per_page: number;
@@ -73,6 +75,7 @@ export interface PaginationMeta {
   onResponse(response: Response): void;
   toStr(cell: ApplicationField): string;
   idFromJson(_: ApplicationBaseObject): string;
+  setUpJsonKeyMap(): void;
 }
 
 export abstract class PaginatedEntity implements PaginationMeta {
@@ -156,6 +159,19 @@ export abstract class PaginatedEntity implements PaginationMeta {
   idFromJson(_: ApplicationBaseObject): string {
     throw "unimplemented";
   }
+
+  readonly jsonKeyMap: Record<string, string> = {};
+  protected jsonKeyMapSetUp = false;
+  setUpJsonKeyMap() {
+    if(!this.jsonKeyMapSetUp) {
+      for (const [title, value] of
+        Object.entries(this.metadata)) {
+        this.jsonKeyMap[value.jsonKey] = title;
+      }
+      this.jsonKeyMapSetUp = true;
+    }
+  }
+
 }
 
 export interface Todo extends ApplicationBaseObject {
@@ -274,6 +290,7 @@ export class TodoPagination extends PaginatedEntity {
   constructor() {
     super();
     this.resources = [];
+    this.setUpJsonKeyMap();
   }
 }
 
@@ -441,5 +458,7 @@ export class UsersPagination extends PaginatedEntity {
   constructor() {
     super();
     this.resources = [];
+    this.setUpJsonKeyMap();
+
   }
 }

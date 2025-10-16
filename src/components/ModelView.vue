@@ -8,7 +8,7 @@ import {
   type ApplicationBaseObject,
   type ApplicationBaseField
 } from "../models.ts";
-import {responseToStr, startLoading, stopLoading} from "../base.ts";
+import {type ErrorFromServer, responseToStr, startLoading, stopLoading} from "../base.ts";
 import CheckBoxInputField from "./field_components/CheckBoxInputField.vue";
 import TextInputField from "./field_components/TextInputField.vue";
 import {type Component, type Ref, ref} from "vue";
@@ -190,7 +190,7 @@ async function onSave() {
       }
     );
     if(response.status != 201) {
-      requestErr.value = await responseToStr(response);
+      errOutFromServer(await responseToStr(response))
     } else {
       requestErr.value = "";
       const resource: ApplicationBaseObject = await response.json();
@@ -240,7 +240,6 @@ async function onSave() {
   } finally {
     stopLoading();
   }
-  console.log(requestErr.value);
 }
 
 function getHeading(mode: string): string {
@@ -279,6 +278,33 @@ function orderFields(
   });
 
   return rows;
+}
+
+function errOutFromServer(errors: ErrorFromServer[]) {
+  const errStrings = [];
+  for(let err of errors) {
+    if(err.jsonKey === ""){
+      errStrings.push(err.message);
+    } else {
+      const title = appModel.value.jsonKeyMap[err.jsonKey];
+      if(!title) {
+        errStrings.push(err.message);
+        console.error(`Title for json key ${err.jsonKey} not found!`);
+        continue;
+      }
+
+      const ref = componentRefs[title];
+      if(!ref) {
+        errStrings.push(err.message);
+        console.error(`Ref for title ${title} not found!`);
+        continue;
+      }
+      errStrings.push(`${title}: ${err.message}`);
+      ref.value?.errOut();
+    }
+  }
+
+  requestErr.value = errStrings.join("\n");
 }
 
 </script>
