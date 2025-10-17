@@ -74,10 +74,8 @@ const mode: Ref<Mode> = ref(props.object != null ? "View" : "Create");
 for (const [key, meta] of Object.entries(appModel.value.metadata)) {
   const fieldData = object.value?.fields.find(f => f.title === key);
   let initialValue = null;
-  if(fieldData == null) {
-
-  } else {
-    initialValue = fieldData!.value;
+  if(fieldData != null) {
+    initialValue = fieldData.value;
   }
 
   componentRefs[key] = ref(null); // Create ref for each component
@@ -364,7 +362,7 @@ const getComponentProps = (field: ApplicationFormFieldMetaData) => {
         <template v-for="field in row" :key="field.jsonKey">
           <div :class="`${getFlexClass(field.flex)} ${field.tailwindClasses} w-full`">
             <component
-              v-if="mode != 'Create' || field.dumpOnCreate"
+              v-show="mode != 'Create' || field.dumpOnCreate"
               :ref="setComponentRef(field.title)"
               :is="componentMap[field.formInputType] as Component"
               v-bind="getComponentProps(field)"/>

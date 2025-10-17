@@ -48,6 +48,9 @@ defineExpose({
     }
   },
   setValue: (_value: string | number) => {
+    if(props.hint == "UID") {
+      console.log(`UID ${_value}`);
+    }
     value.value = _value;
   }
 });
@@ -71,7 +74,7 @@ function onFocusLost() {
     <div>
       <span class="text-gray-800 text-lg font-semibold">{{ props.hint }}</span>
       <span class="text-gray-800 text-lg font-semibold pr-2" v-if="constant">:</span>
-      <span class="text-gray-800 text-lg" v-if="constant">{{ initialValue }}</span>
+      <span class="text-gray-800 text-lg" v-if="constant">{{ value }}</span>
     </div>
     <input
       v-if="!constant"

@@ -7,50 +7,60 @@ import {
 import TextInputField from "./TextInputField.vue";
 import {apiRoot} from "../../konstants.ts";
 
-// todo fix this when its coming from ModelView
+
 const props = defineProps<{
   hint: string;
   appModel: PaginatedEntity,
   disabled?: boolean,
-  initialSelection?: ApplicationBaseObject
+  initialValue?: ApplicationBaseObject
 }>();
-console.log(JSON.stringify(props.initialSelection));
 
-const debounceMs = 300;
+const debounceMs = 200;
 
 const textInputField: Ref<InstanceType<typeof TextInputField> | null> = ref(null);
 let selectedObjectID: ApplicationBaseField = 0;
 
-if(props.initialSelection) {
-  selectedObjectID = props.appModel.getUniqueID(props.initialSelection);
+let lastSearch = "-1";
+if(props.initialValue) {
+  selectedObjectID = props.appModel.getUniqueID(props.initialValue);
 }
 
 const results = ref<ApplicationBaseObject[]>([]);
 const showResults = ref(false);
 
+
+
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 const searchAPI = async (query: string) => {
-  try {
-    const url = new URL(`${apiRoot}${props.appModel.getResourcesRoute}/1/5`);
-    url.searchParams.append("search", query);
+  query = query.trim();
 
-    const response = await fetch(url.toString());
+  if(query !== lastSearch) {
+    try {
+      const url = new URL(`${apiRoot}${props.appModel.getResourcesRoute}/1/5`);
+      if(query !== "") {
+        url.searchParams.append("search", query);
+      }
 
-    if (response.status !== 200) {
-      console.error("Got unexpected status code from server");
-      return
+      const response = await fetch(url.toString());
+
+      if (response.status !== 200) {
+        console.error("Got unexpected status code from server");
+        return
+      }
+      lastSearch = query;
+
+      const data = await response.json();
+      // Fix: Check for data.page instead of data.results
+      results.value = data.page;
+      showResults.value = true;
+    } catch (error) {
+      results.value = [];
+      showResults.value = false;
+    } finally {
     }
-
-    const data = await response.json();
-    // Fix: Check for data.page instead of data.results
-    results.value = data.page;
+  } else {
     showResults.value = true;
-    // emit("results", results.value);
-  } catch (error) {
-    results.value = [];
-    showResults.value = false;
-  } finally {
   }
 };
 
@@ -95,6 +105,24 @@ defineExpose({
     selectedObjectID = props.appModel.getUniqueID(_value);
   }
 });
+
+
+function getInitialValue(): string {
+  if(props.initialValue) {
+    return props.appModel.getUniqueStr(props.initialValue);
+  }
+  return "";
+}
+
+
+const onFocus = () => {
+  let value = textInputField.value?.getValue();
+  if(!value) {
+    value = "";
+  }
+  handleInput(`${value}`);
+}
+
 </script>
 
 <template>
@@ -103,7 +131,8 @@ defineExpose({
     <div class="relative">
       <TextInputField
         ref="textInputField"
-        @focus="results.length > 0 ? showResults = true : null"
+        :initialValue="getInitialValue()"
+        :onFocus="onFocus"
         :onFocusLost="handleBlur"
         :disabled="props.disabled"
         :hint="`${props.hint}`"
