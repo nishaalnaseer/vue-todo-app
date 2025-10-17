@@ -53,6 +53,19 @@ const componentMap: Record<FormFieldType, FormComponents> = {
 const mountedComponents: Record<string, MountedComponent> = {};
 // Store refs separately
 const componentRefs: Record<string, Ref<FieldComponentInstance | null>> = {};
+const flexMap: Record<number, string> = {
+  1: "flex-1",
+  2: "flex-2",
+  3: "flex-3",
+  4: "flex-4",
+  5: "flex-5",
+  6: "flex-6",
+  7: "flex-7",
+  8: "flex-8",
+  9: "flex-9",
+  11: "flex-11",
+  12: "flex-12",
+}
 
 const mode: Ref<Mode> = ref(props.object != null ? "View" : "Create");
 
@@ -60,9 +73,6 @@ for (const [key, meta] of Object.entries(appModel.value.metadata)) {
   const fieldData = object.value?.fields.find(f => f.title === key);
   let initialValue = null;
   if(fieldData == null) {
-    if(!meta.dumpOnCreate) {
-      continue;
-    }
 
   } else {
     initialValue = fieldData!.value;
@@ -181,7 +191,7 @@ async function onSave() {
 
   try {
     const response = await fetch(
-      `${apiRoot}/user`,
+      `${apiRoot}${appModel.value.getPostPatchRoute}`,
       {
         method: method,
         body: JSON.stringify(data),
@@ -309,6 +319,11 @@ function errOutFromServer(errors: ErrorFromServer[]) {
   requestErr.value = errStrings;
 }
 
+
+function getFlexClass(flex: number): string {
+  return flexMap[flex] || "flex-12";
+}
+
 </script>
 
 <template>
@@ -319,7 +334,7 @@ function errOutFromServer(errors: ErrorFromServer[]) {
     </div>
   </div>
 
-  <div class="flex flex-row-reverse">
+  <div class="flex flex-row-reverse pb-2">
     <button v-show="mode === 'View'"
             class="mx-1 border-2 px-4 py-1 rounded-4xl text-red-500
        font-semibold border-red-500 hover:text-red-700 hover:border-red-700
@@ -338,12 +353,13 @@ function errOutFromServer(errors: ErrorFromServer[]) {
     <div v-for="(row, rowIndex) in orderedFields">
       <div class="flex gap-2" :key="rowIndex">
         <template v-for="field in row" :key="field.jsonKey">
-          <component
-            v-if="mode != 'Create' || field.dumpOnCreate"
-            :ref="setComponentRef(field.title)"
-            :is="componentMap[field.formInputType] as Component"
-            v-bind="mountedComponents[field.title]!.props"
-          />
+          <div :class="`${getFlexClass(field.flex)} ${field.tailwindClasses} w-full`">
+            <component
+              v-if="mode != 'Create' || field.dumpOnCreate"
+              :ref="setComponentRef(field.title)"
+              :is="componentMap[field.formInputType] as Component"
+              v-bind="mountedComponents[field.title]!.props"/>
+          </div>
         </template>
       </div>
     </div>

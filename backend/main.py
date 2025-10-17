@@ -19,7 +19,7 @@ app.add_middleware(
 class Todo(BaseModel):
     id: int = 0
     todo: str
-    date: datetime
+    date: datetime = datetime.now()
     done: bool
 
 

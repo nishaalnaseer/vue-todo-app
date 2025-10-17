@@ -5,7 +5,7 @@ import {TodoPagination} from "../models.ts";
 </script>
 
 <template>
-<PaginatedModelsView :appModel="new TodoPagination()"/>
+  <PaginatedModelsView :appModel="new TodoPagination()"/>
 </template>
 
 <style scoped>

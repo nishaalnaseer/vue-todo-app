@@ -34,6 +34,7 @@ export interface ApplicationFormFieldMetaData {
   positionRow: number;
   positionColumn: number;
   flex: number;
+  tailwindClasses: string;
 
   fromJson?(value: ApplicationBaseField): ApplicationBaseField;
   toStr(value: ApplicationBaseField): string;
@@ -154,7 +155,7 @@ export abstract class PaginatedEntity implements PaginationMeta {
   }
 
   readonly jsonKeyMap: Record<string, string> = {};
-  protected jsonKeyMapSetUp = false;
+  jsonKeyMapSetUp = false;
   setUpJsonKeyMap() {
     if(!this.jsonKeyMapSetUp) {
       for (const [title, value] of
@@ -197,13 +198,14 @@ export class TodoPagination extends PaginatedEntity {
       jsonKey: "id",
       dumpOnCreate: false,
       dumpOnUpdate: true,
+      tailwindClasses: "",
 
       positionRow: 0,
       positionColumn: 0,
-      flex: 12,
+      flex: 3,
 
-      fieldValidation(value: string): string | null {
-        return basicStringValidation(value);
+      fieldValidation(value: number): number {
+        return value;
       },
       toStr: (value: number) => {
         return `${value}`;
@@ -213,17 +215,18 @@ export class TodoPagination extends PaginatedEntity {
       title: "Date",
       showOnTable: true,
       jsonKey: "date",
-      dumpOnCreate: true,
-      dumpOnUpdate: true,
+      dumpOnCreate: false,
+      dumpOnUpdate: false,
+      tailwindClasses: "flex text-end",
 
-      positionRow: 1,
-      positionColumn: 0,
-      flex: 12,
+      positionRow: 0,
+      positionColumn: 1,
+      flex: 9,
 
       fieldValidation(value: Date): Date | null {
         return beforeTodayValidation(value);
       },
-      formOverrideAsReadOnly: false,
+      formOverrideAsReadOnly: true,
       formInputType: "DateInputField",
       toStr: (value: Date) => {
         return value.toUTCString().replace("GMT", "");
@@ -237,8 +240,9 @@ export class TodoPagination extends PaginatedEntity {
       showOnTable: true,
       jsonKey: "todo",
       dumpOnCreate: true,
+      tailwindClasses: "",
 
-      positionRow: 2,
+      positionRow: 1,
       positionColumn: 0,
       flex: 12,
 
@@ -254,8 +258,9 @@ export class TodoPagination extends PaginatedEntity {
       showOnTable: true,
       jsonKey: "done",
       dumpOnCreate: true,
+      tailwindClasses: "",
 
-      positionRow: 3,
+      positionRow: 2,
       positionColumn: 0,
       flex: 12,
 
@@ -275,10 +280,6 @@ export class TodoPagination extends PaginatedEntity {
   readonly formHeadingOnCreate = "Create Todo";
   readonly formHeadingOnUpdate = "Edit Todo";
   readonly formHeadingOnRead = "Todo Details";
-
-  idFromJson(value: ApplicationBaseObject): string {
-    return `${value.id}`;
-  }
 
   constructor() {
     super();
@@ -306,6 +307,7 @@ export class UsersPagination extends PaginatedEntity {
       toStr: (value: string) => {
         return value;
       },
+      tailwindClasses: "",
 
       positionRow: 0,
       positionColumn: 0,
@@ -326,6 +328,7 @@ export class UsersPagination extends PaginatedEntity {
       toStr: (value: string) => {
         return value;
       },
+      tailwindClasses: "",
 
       positionRow: 1,
       positionColumn: 0,
@@ -345,6 +348,7 @@ export class UsersPagination extends PaginatedEntity {
       toStr: (value: string) => {
         return value;
       },
+      tailwindClasses: "",
 
       positionRow: 2,
       positionColumn: 0,
@@ -364,6 +368,7 @@ export class UsersPagination extends PaginatedEntity {
       toStr: (value: string) => {
         return value;
       },
+      tailwindClasses: "",
 
       positionRow: 3,
       positionColumn: 0,
@@ -387,6 +392,7 @@ export class UsersPagination extends PaginatedEntity {
       fromJson(value: string | number): ApplicationBaseField {
         return new Date(value);
       },
+      tailwindClasses: "",
 
       positionRow: 1,
       positionColumn: 1,
@@ -409,6 +415,7 @@ export class UsersPagination extends PaginatedEntity {
       fromJson(value: string | number): ApplicationBaseField {
         return new Date(value);
       },
+      tailwindClasses: "",
 
       positionRow: 5,
       positionColumn: 0,
@@ -426,6 +433,7 @@ export class UsersPagination extends PaginatedEntity {
       formOverrideAsReadOnly: false,
       formInputType: "CheckBoxInputField",
       toStr: (value: boolean) => value ? "Yes" : "No",
+      tailwindClasses: "",
 
       positionRow: 4,
       positionColumn: 0,

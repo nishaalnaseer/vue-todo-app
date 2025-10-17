@@ -7,7 +7,6 @@ import {
 import {apiRoot} from "./../konstants.ts";
 import { onMounted, ref, watch, computed } from "vue";
 import {RouterLink, useRoute} from "vue-router";
-import TodoComponent from "./TodoComponent.vue";
 import ModelView from "./ModelView.vue";
 import {startLoading, stopLoading} from "../base.ts";
 
@@ -23,7 +22,7 @@ let selectedResource: ApplicationModelFields | null = null;
 
 const componentMap = {
   users: ModelView,
-  todos: TodoComponent,
+  todos: ModelView,
 } as const;
 
 
