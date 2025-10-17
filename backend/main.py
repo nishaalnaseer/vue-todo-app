@@ -1,3 +1,5 @@
+from random import randint
+
 from pydantic import Field
 from datetime import datetime
 from typing import Annotated, TypeVar, Generic, List
@@ -16,13 +18,6 @@ app.add_middleware(
 )
 
 
-class Todo(BaseModel):
-    id: int = 0
-    todo: str
-    date: datetime = datetime.now()
-    done: bool
-
-
 class User(BaseModel):
     id: int = 0
     staff_id: str = Field(..., min_length=5)
@@ -31,6 +26,17 @@ class User(BaseModel):
     joined: datetime
     enabled: bool
     email: str
+
+
+class TodoIn(BaseModel):
+    id: int = 0
+    todo: str
+    date: datetime = datetime.now()
+    done: bool
+    user: int
+
+class Todo(TodoIn):
+    user: User
 
 
 T = TypeVar("T", bound=BaseModel)
@@ -146,56 +152,56 @@ users = [
          joined=datetime(2024, 10, 1, 13, 30), enabled=True, email="xena.rivera@company.com"),
 ]
 todos = [
-    Todo(id=1, todo="Review quarterly budget report", date=datetime(2024, 10, 1, 9, 0), done=True),
-    Todo(id=2, todo="Schedule team meeting for project kickoff", date=datetime(2024, 10, 2, 10, 30), done=True),
-    Todo(id=3, todo="Update client presentation slides", date=datetime(2024, 10, 3, 14, 0), done=True),
-    Todo(id=4, todo="Fix bug in authentication module", date=datetime(2024, 10, 4, 11, 15), done=False),
-    Todo(id=5, todo="Prepare training materials for new hires", date=datetime(2024, 10, 5, 13, 30), done=True),
-    Todo(id=6, todo="Review pull requests from development team", date=datetime(2024, 10, 6, 15, 45), done=False),
-    Todo(id=7, todo="Conduct performance review with team members", date=datetime(2024, 10, 7, 9, 30), done=True),
-    Todo(id=8, todo="Research new project management tools", date=datetime(2024, 10, 8, 12, 0), done=False),
-    Todo(id=9, todo="Update documentation for API endpoints", date=datetime(2024, 10, 9, 10, 0), done=True),
-    Todo(id=10, todo="Organize team building activity", date=datetime(2024, 10, 10, 16, 0), done=False),
-    Todo(id=11, todo="Respond to customer support tickets", date=datetime(2024, 10, 11, 8, 30), done=True),
-    Todo(id=12, todo="Optimize database queries for performance", date=datetime(2024, 10, 12, 14, 30), done=False),
-    Todo(id=13, todo="Create social media content calendar", date=datetime(2024, 10, 13, 11, 0), done=True),
-    Todo(id=14, todo="Audit security protocols", date=datetime(2024, 10, 14, 13, 15), done=False),
-    Todo(id=15, todo="Plan Q4 marketing campaign", date=datetime(2024, 10, 15, 10, 45), done=True),
-    Todo(id=16, todo="Review and approve expense reports", date=datetime(2024, 10, 16, 9, 0), done=True),
-    Todo(id=17, todo="Coordinate with design team on new logo", date=datetime(2024, 10, 17, 15, 30), done=False),
-    Todo(id=18, todo="Test new feature in staging environment", date=datetime(2024, 10, 18, 12, 45), done=True),
-    Todo(id=19, todo="Write blog post about industry trends", date=datetime(2024, 10, 19, 14, 0), done=False),
-    Todo(id=20, todo="Attend virtual conference on AI developments", date=datetime(2024, 10, 20, 9, 30), done=True),
-    Todo(id=21, todo="Update employee handbook", date=datetime(2024, 10, 21, 11, 30), done=False),
-    Todo(id=22, todo="Schedule equipment maintenance", date=datetime(2024, 10, 22, 8, 0), done=True),
-    Todo(id=23, todo="Prepare monthly financial report", date=datetime(2024, 10, 23, 13, 0), done=False),
-    Todo(id=24, todo="Conduct user testing session", date=datetime(2024, 10, 24, 10, 15), done=True),
-    Todo(id=25, todo="Review competitor analysis report", date=datetime(2024, 10, 25, 15, 0), done=False),
-    Todo(id=26, todo="Set up automated backup system", date=datetime(2024, 10, 26, 9, 45), done=True),
-    Todo(id=27, todo="Draft partnership proposal", date=datetime(2024, 10, 27, 12, 30), done=False),
-    Todo(id=28, todo="Organize office supply inventory", date=datetime(2024, 10, 28, 14, 15), done=True),
-    Todo(id=29, todo="Review and update privacy policy", date=datetime(2024, 10, 29, 11, 0), done=False),
-    Todo(id=30, todo="Create onboarding checklist for new employees", date=datetime(2024, 10, 30, 10, 0), done=True),
-    Todo(id=31, todo="Analyze website traffic metrics", date=datetime(2024, 10, 31, 13, 45), done=False),
-    Todo(id=32, todo="Implement two-factor authentication", date=datetime(2024, 11, 1, 9, 15), done=True),
-    Todo(id=33, todo="Schedule server maintenance window", date=datetime(2024, 11, 2, 15, 30), done=False),
-    Todo(id=34, todo="Create customer satisfaction survey", date=datetime(2024, 11, 3, 12, 0), done=True),
-    Todo(id=35, todo="Update product roadmap", date=datetime(2024, 11, 4, 10, 30), done=False),
-    Todo(id=36, todo="Negotiate vendor contracts", date=datetime(2024, 11, 5, 14, 45), done=True),
-    Todo(id=37, todo="Design email newsletter template", date=datetime(2024, 11, 6, 11, 15), done=False),
-    Todo(id=38, todo="Conduct security training session", date=datetime(2024, 11, 7, 9, 0), done=True),
-    Todo(id=39, todo="Review code standards and best practices", date=datetime(2024, 11, 8, 13, 30), done=False),
-    Todo(id=40, todo="Plan holiday office party", date=datetime(2024, 11, 9, 16, 0), done=True),
-    Todo(id=41, todo="Update disaster recovery plan", date=datetime(2024, 11, 10, 8, 30), done=False),
-    Todo(id=42, todo="Create video tutorial for product features", date=datetime(2024, 11, 11, 12, 15), done=True),
-    Todo(id=43, todo="Review insurance coverage options", date=datetime(2024, 11, 12, 14, 0), done=False),
-    Todo(id=44, todo="Optimize mobile app performance", date=datetime(2024, 11, 13, 10, 45), done=True),
-    Todo(id=45, todo="Conduct employee satisfaction survey", date=datetime(2024, 11, 14, 9, 30), done=False),
-    Todo(id=46, todo="Prepare investor presentation", date=datetime(2024, 11, 15, 15, 15), done=True),
-    Todo(id=47, todo="Implement A/B testing framework", date=datetime(2024, 11, 16, 11, 30), done=False),
-    Todo(id=48, todo="Review cloud infrastructure costs", date=datetime(2024, 11, 17, 13, 0), done=True),
-    Todo(id=49, todo="Update terms of service document", date=datetime(2024, 11, 18, 10, 0), done=False),
-    Todo(id=50, todo="Plan year-end company retreat", date=datetime(2024, 11, 19, 14, 30), done=True),
+    Todo(id=1, todo="Review quarterly budget report", date=datetime(2024, 10, 1, 9, 0), done=True, user=users[randint(0, 49)]),
+    Todo(id=2, todo="Schedule team meeting for project kickoff", date=datetime(2024, 10, 2, 10, 30), done=True, user=users[randint(0, 49)]),
+    Todo(id=3, todo="Update client presentation slides", date=datetime(2024, 10, 3, 14, 0), done=True, user=users[randint(0, 49)]),
+    Todo(id=4, todo="Fix bug in authentication module", date=datetime(2024, 10, 4, 11, 15), done=False, user=users[randint(0, 49)]),
+    Todo(id=5, todo="Prepare training materials for new hires", date=datetime(2024, 10, 5, 13, 30), done=True, user=users[randint(0, 49)]),
+    Todo(id=6, todo="Review pull requests from development team", date=datetime(2024, 10, 6, 15, 45), done=False, user=users[randint(0, 49)]),
+    Todo(id=7, todo="Conduct performance review with team members", date=datetime(2024, 10, 7, 9, 30), done=True, user=users[randint(0, 49)]),
+    Todo(id=8, todo="Research new project management tools", date=datetime(2024, 10, 8, 12, 0), done=False, user=users[randint(0, 49)]),
+    Todo(id=9, todo="Update documentation for API endpoints", date=datetime(2024, 10, 9, 10, 0), done=True, user=users[randint(0, 49)]),
+    Todo(id=10, todo="Organize team building activity", date=datetime(2024, 10, 10, 16, 0), done=False, user=users[randint(0, 49)]),
+    Todo(id=11, todo="Respond to customer support tickets", date=datetime(2024, 10, 11, 8, 30), done=True, user=users[randint(0, 49)]),
+    Todo(id=12, todo="Optimize database queries for performance", date=datetime(2024, 10, 12, 14, 30), done=False, user=users[randint(0, 49)]),
+    Todo(id=13, todo="Create social media content calendar", date=datetime(2024, 10, 13, 11, 0), done=True, user=users[randint(0, 49)]),
+    Todo(id=14, todo="Audit security protocols", date=datetime(2024, 10, 14, 13, 15), done=False, user=users[randint(0, 49)]),
+    Todo(id=15, todo="Plan Q4 marketing campaign", date=datetime(2024, 10, 15, 10, 45), done=True, user=users[randint(0, 49)]),
+    Todo(id=16, todo="Review and approve expense reports", date=datetime(2024, 10, 16, 9, 0), done=True, user=users[randint(0, 49)]),
+    Todo(id=17, todo="Coordinate with design team on new logo", date=datetime(2024, 10, 17, 15, 30), done=False, user=users[randint(0, 49)]),
+    Todo(id=18, todo="Test new feature in staging environment", date=datetime(2024, 10, 18, 12, 45), done=True, user=users[randint(0, 49)]),
+    Todo(id=19, todo="Write blog post about industry trends", date=datetime(2024, 10, 19, 14, 0), done=False, user=users[randint(0, 49)]),
+    Todo(id=20, todo="Attend virtual conference on AI developments", date=datetime(2024, 10, 20, 9, 30), done=True, user=users[randint(0, 49)]),
+    Todo(id=21, todo="Update employee handbook", date=datetime(2024, 10, 21, 11, 30), done=False, user=users[randint(0, 49)]),
+    Todo(id=22, todo="Schedule equipment maintenance", date=datetime(2024, 10, 22, 8, 0), done=True, user=users[randint(0, 49)]),
+    Todo(id=23, todo="Prepare monthly financial report", date=datetime(2024, 10, 23, 13, 0), done=False, user=users[randint(0, 49)]),
+    Todo(id=24, todo="Conduct user testing session", date=datetime(2024, 10, 24, 10, 15), done=True, user=users[randint(0, 49)]),
+    Todo(id=25, todo="Review competitor analysis report", date=datetime(2024, 10, 25, 15, 0), done=False, user=users[randint(0, 49)]),
+    Todo(id=26, todo="Set up automated backup system", date=datetime(2024, 10, 26, 9, 45), done=True, user=users[randint(0, 49)]),
+    Todo(id=27, todo="Draft partnership proposal", date=datetime(2024, 10, 27, 12, 30), done=False, user=users[randint(0, 49)]),
+    Todo(id=28, todo="Organize office supply inventory", date=datetime(2024, 10, 28, 14, 15), done=True, user=users[randint(0, 49)]),
+    Todo(id=29, todo="Review and update privacy policy", date=datetime(2024, 10, 29, 11, 0), done=False, user=users[randint(0, 49)]),
+    Todo(id=30, todo="Create onboarding checklist for new employees", date=datetime(2024, 10, 30, 10, 0), done=True, user=users[randint(0, 49)]),
+    Todo(id=31, todo="Analyze website traffic metrics", date=datetime(2024, 10, 31, 13, 45), done=False, user=users[randint(0, 49)]),
+    Todo(id=32, todo="Implement two-factor authentication", date=datetime(2024, 11, 1, 9, 15), done=True, user=users[randint(0, 49)]),
+    Todo(id=33, todo="Schedule server maintenance window", date=datetime(2024, 11, 2, 15, 30), done=False, user=users[randint(0, 49)]),
+    Todo(id=34, todo="Create customer satisfaction survey", date=datetime(2024, 11, 3, 12, 0), done=True, user=users[randint(0, 49)]),
+    Todo(id=35, todo="Update product roadmap", date=datetime(2024, 11, 4, 10, 30), done=False, user=users[randint(0, 49)]),
+    Todo(id=36, todo="Negotiate vendor contracts", date=datetime(2024, 11, 5, 14, 45), done=True, user=users[randint(0, 49)]),
+    Todo(id=37, todo="Design email newsletter template", date=datetime(2024, 11, 6, 11, 15), done=False, user=users[randint(0, 49)]),
+    Todo(id=38, todo="Conduct security training session", date=datetime(2024, 11, 7, 9, 0), done=True, user=users[randint(0, 49)]),
+    Todo(id=39, todo="Review code standards and best practices", date=datetime(2024, 11, 8, 13, 30), done=False, user=users[randint(0, 49)]),
+    Todo(id=40, todo="Plan holiday office party", date=datetime(2024, 11, 9, 16, 0), done=True, user=users[randint(0, 49)]),
+    Todo(id=41, todo="Update disaster recovery plan", date=datetime(2024, 11, 10, 8, 30), done=False, user=users[randint(0, 49)]),
+    Todo(id=42, todo="Create video tutorial for product features", date=datetime(2024, 11, 11, 12, 15), done=True, user=users[randint(0, 49)]),
+    Todo(id=43, todo="Review insurance coverage options", date=datetime(2024, 11, 12, 14, 0), done=False, user=users[randint(0, 49)]),
+    Todo(id=44, todo="Optimize mobile app performance", date=datetime(2024, 11, 13, 10, 45), done=True, user=users[randint(0, 49)]),
+    Todo(id=45, todo="Conduct employee satisfaction survey", date=datetime(2024, 11, 14, 9, 30), done=False, user=users[randint(0, 49)]),
+    Todo(id=46, todo="Prepare investor presentation", date=datetime(2024, 11, 15, 15, 15), done=True, user=users[randint(0, 49)]),
+    Todo(id=47, todo="Implement A/B testing framework", date=datetime(2024, 11, 16, 11, 30), done=False, user=users[randint(0, 49)]),
+    Todo(id=48, todo="Review cloud infrastructure costs", date=datetime(2024, 11, 17, 13, 0), done=True, user=users[randint(0, 49)]),
+    Todo(id=49, todo="Update terms of service document", date=datetime(2024, 11, 18, 10, 0), done=False, user=users[randint(0, 49)]),
+    Todo(id=50, todo="Plan year-end company retreat", date=datetime(2024, 11, 19, 14, 30), done=True, user=users[randint(0, 49)]),
 ]
 
 
@@ -229,22 +235,44 @@ def create_user(user: User) -> User:
 
 
 @app.post("/todo", status_code=201)
-def create_todo(todo: Todo) -> Todo:
+def create_todo(todo_in: TodoIn) -> Todo:
+    _user = _get_user(todo_in.user)
+    todo = Todo(
+        id=len(todos),
+        todo=todo_in.todo,
+        date=todo_in.date,
+        done=todo_in.done,
+        user=_user,
+    )
     todos.append(todo)
-    todo.id = len(todos)
     return todo
 
 
 @app.patch("/todo", status_code=201)
-def update_todo(todo: Todo) -> Todo:
-    _todo = _get_todo(todo.id)
-    todos[_todo.id-1] = todo
-    return todo
+def update_todo(todo_in: TodoIn) -> Todo:
+    _todo = _get_todo(todo_in.id)
+
+    _user = _get_user(todo_in.user)
+    _todo.user = _user
+    _todo.todo = todo_in.todo
+    _todo.date = todo_in.date
+    _todo.done = todo_in.done
+
+    todos[_todo.id-1] = _todo
+    return _todo
 
 @app.patch("/user", status_code=201)
 def update_user(user: User) -> User:
     _user = _get_user(user.id)
     users[_user.id-1] = user
+
+    _user.staff_id = user.staff_id
+    _user.name = user.name
+    _user.created = user.created
+    _user.joined = user.joined
+    _user.enabled = user.enabled
+    _user.email = user.email
+
     return user
 
 
@@ -255,10 +283,18 @@ def calculate_offset(page: int, page_size: int) -> int:
 @app.get("/users/{page}/{page_size}")
 def get_users(
         page: Annotated[int, Path(...)],
-        page_size: Annotated[int, Path(...)]
+        page_size: Annotated[int, Path(...)],
+        search: str | None = None
 ) -> Page[User]:
+    if search:
+        _users = [
+            user for user in users if search in user.name or search in user.email
+        ]
+    else:
+        _users = users
+
     offset = calculate_offset(page, page_size)
-    _users = users[offset:offset+page_size]
+    _users = _users[offset:offset+page_size]
 
     return Page(
         page=_users,

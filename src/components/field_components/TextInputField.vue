@@ -8,6 +8,9 @@ const props = defineProps<{
   autocomplete?: string | null,
   disabled: boolean,
   constant?: boolean | null,
+  onChanged?(value: string | number): void,
+  onFocus?(): void,
+  onFocusLost?(): void,
 }>();
 
 const initialValue = props.initialValue;
@@ -16,6 +19,13 @@ const autocomplete = props.autocomplete ?? "off";
 const disabled = ref(props.disabled);
 const constant = props.constant ?? false;
 const erred = ref(false);
+
+function handleInput() {
+  if(props.onChanged != null) {
+    console.log(value.value);
+    props.onChanged(value.value);
+  }
+}
 
 defineExpose({
   getValue: () => value.value,
@@ -42,6 +52,18 @@ defineExpose({
   }
 });
 
+function onFocus() {
+  if(props.onFocus) {
+    props.onFocus();
+  }
+}
+
+function onFocusLost() {
+  if(props.onFocusLost) {
+    props.onFocusLost();
+  }
+}
+
 </script>
 
 <template>
@@ -55,6 +77,9 @@ defineExpose({
       v-if="!constant"
       v-model="value"
       :disabled="disabled"
+      @focus="onFocus()"
+      @blur="onFocusLost()"
+      @input="handleInput"
       :class="[
         'p-2 border-2 transition-colors focus:outline-none rounded-lg text-gray-700',
         '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none',

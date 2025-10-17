@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import AppRoot from "./AppRoot.vue";
-import type {Todo} from "../models"
+import {type Todo, UsersPagination} from "../models"
+import ForeignRefInputField from "./field_components/ForeignRefInputField.vue";
 
 
 const newTodo = ref('');
@@ -38,11 +39,11 @@ function removeTodo(description: string) {
             </span>
           </span>
 
-          <div class="flex justify-center w-full pt-4">
+          <div class="flex justify-center w-full pt-4 items-center">
             <button @click="removeTodo(id)"
             class="text-red-500 hover:text-red-600 cursor-pointer border
             border-red-400 hover:hover-red-600 px-2 rounded-sm
-             bg-red-50 hover:bg-red-100">
+             bg-red-50 hover:bg-red-100 items-center">
               Remove
             </button>
           </div>
@@ -60,6 +61,13 @@ function removeTodo(description: string) {
                focus:outline-none rounded-sm text-gray-700 [appearance:textfield]
                [&::-webkit-outer-spin-button]:appearance-none
                [&::-webkit-inner-spin-button]:appearance-none">
+
+        <div>
+          <ForeignRefInputField
+              hint="Select User"
+              :appModel="new UsersPagination()"/>
+        </div>
+
         <button class="my-2 py-2 font-semibold border-2 cursor-pointer
         text-red-700 rounded-sm hover:text-red-800" @click="addTodo">
           Add Todo

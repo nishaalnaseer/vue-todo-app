@@ -15,10 +15,11 @@ import CheckBoxInputField from "./field_components/CheckBoxInputField.vue";
 import TextInputField from "./field_components/TextInputField.vue";
 import {type Component, type Ref, ref} from "vue";
 import DateInputField from "./field_components/DateInputField.vue";
+import ForeignRefInputField from "./field_components/ForeignRefInputField.vue";
 import {apiRoot} from "../konstants.ts";
 
 type FormComponents = typeof TextInputField | typeof DateInputField
-    | typeof CheckBoxInputField;
+    | typeof CheckBoxInputField | typeof ForeignRefInputField;
 
 interface FieldComponentInstance {
   getValue: () => string | Date | boolean;
@@ -47,6 +48,7 @@ const requestErr: Ref<string[]> = ref([]);
 const componentMap: Record<FormFieldType, FormComponents> = {
   "TextInputField": TextInputField,
   "DateInputField": DateInputField,
+  "ForeignRefInputField": ForeignRefInputField,
   "CheckBoxInputField": CheckBoxInputField,
 } as const;
 
@@ -324,6 +326,13 @@ function getFlexClass(flex: number): string {
   return flexMap[flex] || "flex-12";
 }
 
+const getComponentProps = (field: ApplicationFormFieldMetaData) => {
+  return {
+    ...mountedComponents[field.title]!.props,
+    ...(field.args || {})
+  };
+};
+
 </script>
 
 <template>
@@ -358,7 +367,7 @@ function getFlexClass(flex: number): string {
               v-if="mode != 'Create' || field.dumpOnCreate"
               :ref="setComponentRef(field.title)"
               :is="componentMap[field.formInputType] as Component"
-              v-bind="mountedComponents[field.title]!.props"/>
+              v-bind="getComponentProps(field)"/>
           </div>
         </template>
       </div>

@@ -1,4 +1,6 @@
-import {basicStringValidation, beforeTodayValidation, birthDateValidation} from "./base.ts";
+import {
+  basicStringValidation, beforeTodayValidation, birthDateValidation
+} from "./base.ts";
 
 export type ApplicationBaseField = string | number | boolean
   | Date | ApplicationBaseObject;
@@ -11,7 +13,7 @@ export type Mode = | "View" | "Create" | "Edit";
 export type FormFieldType =
   | "TextInputField"
   | "DateInputField"
-  | "CheckBoxInputField";
+  | "CheckBoxInputField" | "ForeignRefInputField";
 
 
 interface Page<T = ApplicationBaseObject> {
@@ -35,6 +37,8 @@ export interface ApplicationFormFieldMetaData {
   positionColumn: number;
   flex: number;
   tailwindClasses: string;
+
+  args?: {appModel?: PaginatedEntity};
 
   fromJson?(value: ApplicationBaseField): ApplicationBaseField;
   toStr(value: ApplicationBaseField): string;
@@ -75,6 +79,8 @@ export interface PaginationMeta {
   onResponse(response: Response): void;
   toStr(cell: ApplicationField): string;
   setUpJsonKeyMap(): void;
+  getUniqueStr(result: ApplicationBaseObject): string;
+  getUniqueID(result: ApplicationBaseObject): number;
 }
 
 export abstract class PaginatedEntity implements PaginationMeta {
@@ -166,6 +172,9 @@ export abstract class PaginatedEntity implements PaginationMeta {
     }
   }
 
+
+  getUniqueStr(_: ApplicationBaseObject):string {throw "unimplemented"}
+  getUniqueID(_: ApplicationBaseObject): number {throw "unimplemented"}
 }
 
 export interface Todo extends ApplicationBaseObject {
@@ -217,7 +226,7 @@ export class TodoPagination extends PaginatedEntity {
       jsonKey: "date",
       dumpOnCreate: false,
       dumpOnUpdate: false,
-      tailwindClasses: "flex text-end",
+      tailwindClasses: "text-end",
 
       positionRow: 0,
       positionColumn: 1,
@@ -253,6 +262,28 @@ export class TodoPagination extends PaginatedEntity {
       formOverrideAsReadOnly: false,
       formInputType: "TextInputField",
       toStr: (value: string) => value},
+
+    "User": {
+      title: "User",
+      showOnTable: true,
+      jsonKey: "user",
+      dumpOnCreate: true,
+      tailwindClasses: "",
+
+      positionRow: 2,
+      positionColumn: 0,
+      flex: 12,
+
+      dumpOnUpdate: true,
+      fieldValidation(value: number): number {
+        return value;
+      },
+      formOverrideAsReadOnly: false,
+      formInputType: "ForeignRefInputField",
+      toStr: (value: ApplicationBaseObject) => (value.name as string),
+      args: {appModel: new UsersPagination()}
+    },
+
     "Completed": {
       title: "Completed",
       showOnTable: true,
@@ -260,7 +291,7 @@ export class TodoPagination extends PaginatedEntity {
       dumpOnCreate: true,
       tailwindClasses: "",
 
-      positionRow: 2,
+      positionRow: 3,
       positionColumn: 0,
       flex: 12,
 
@@ -291,7 +322,7 @@ export class TodoPagination extends PaginatedEntity {
 export class UsersPagination extends PaginatedEntity {
   readonly getResourcesRoute: string = "/users";
   readonly overrideAsReadonly: boolean = false;
-  readonly getPostPatchRoute: string = "/users";
+  readonly getPostPatchRoute: string = "/user";
   readonly metadata: Record<string, ApplicationFormFieldMetaData> = {
     "UID": {
       title: "UID",
@@ -396,7 +427,7 @@ export class UsersPagination extends PaginatedEntity {
 
       positionRow: 1,
       positionColumn: 1,
-      flex: 12,
+      flex: 6,
     },
     "User Created": {
       title: "User Created",
@@ -458,4 +489,7 @@ export class UsersPagination extends PaginatedEntity {
     this.setUpJsonKeyMap();
 
   }
+
+  getUniqueStr(user: User):string {return user.name}
+  getUniqueID(user: User): number {return user.id}
 }
