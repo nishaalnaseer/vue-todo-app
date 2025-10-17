@@ -8,7 +8,9 @@ import {
   type ApplicationBaseObject,
   type ApplicationBaseField
 } from "../models.ts";
-import {type ErrorFromServer, responseToStr, startLoading, stopLoading} from "../base.ts";
+import {
+  type ErrorFromServer, responseToStr, startLoading, stopLoading
+} from "../base.ts";
 import CheckBoxInputField from "./field_components/CheckBoxInputField.vue";
 import TextInputField from "./field_components/TextInputField.vue";
 import {type Component, type Ref, ref} from "vue";
@@ -41,7 +43,7 @@ const props = defineProps<{
 const orderedFields = orderFields(props.appModel.metadata);
 const appModel = ref(props.appModel);
 const object = ref(props.object);
-const requestErr = ref("");
+const requestErr: Ref<string[]> = ref([]);
 const componentMap: Record<FormFieldType, FormComponents> = {
   "TextInputField": TextInputField,
   "DateInputField": DateInputField,
@@ -192,7 +194,7 @@ async function onSave() {
     if(response.status != 201) {
       errOutFromServer(await responseToStr(response))
     } else {
-      requestErr.value = "";
+      requestErr.value = [];
       const resource: ApplicationBaseObject = await response.json();
       const fields = [];
       for (const [key, meta] of
@@ -231,11 +233,11 @@ async function onSave() {
         ref.setValue(fieldData.value);
       }
 
-      mode.value = 'View';
+      setMode('View');
       props.refreshPage(false).then(_ => _);
     }
   } catch (exc) {
-    requestErr.value = "Error connecting to server";
+    requestErr.value = ["Error connecting to server",];
     console.error("error sending request");
   } finally {
     stopLoading();
@@ -304,7 +306,7 @@ function errOutFromServer(errors: ErrorFromServer[]) {
     }
   }
 
-  requestErr.value = errStrings.join("\n");
+  requestErr.value = errStrings;
 }
 
 </script>
@@ -345,9 +347,11 @@ function errOutFromServer(errors: ErrorFromServer[]) {
         </template>
       </div>
     </div>
-    <div v-if="requestErr !== ''"
+    <div v-if="requestErr.length !== 0">
+      <p v-for="err in requestErr"
          class="justify-center text-red-600 font-semibold flex w-full">
-      {{requestErr}}
+        {{ err }}
+      </p>
     </div>
     <div class="flex justify-center pt-2" v-if="mode != 'View'">
       <button class="border px-4 py-2 rounded-lg bg-red-700 text-white

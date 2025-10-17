@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {ref} from "vue";
-import type {Mode, ApplicationBaseField} from "../../models.ts";
+import type {Mode} from "../../models.ts";
 
 const props = defineProps<{
   hint: string,
@@ -30,12 +30,15 @@ defineExpose({
       case "Edit":
         disabled.value = false;
         break;
+      case "View":
+        disabled.value = true;
+        break;
       default:
         throw "unimplemented"
     }
   },
-  setValue: (value: ApplicationBaseField) => {
-
+  setValue: (_value: string | number) => {
+    value.value = _value;
   }
 });
 

@@ -50,6 +50,9 @@ defineExpose({
           disabled.value = false;
         }
         break;
+      case "View":
+        disabled.value = true;
+        break;
       default:
         throw "unimplemented"
     }

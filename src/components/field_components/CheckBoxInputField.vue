@@ -29,12 +29,15 @@ defineExpose({
       case "Edit":
         disabled.value = false;
         break;
+      case "View":
+        disabled.value = true;
+        break;
       default:
         throw "unimplemented"
     }
   },
-  setValue: (value: string | Date | boolean) => {
-    // todo
+  setValue: (_value: boolean) => {
+    value.value = _value;
   }
 });
 

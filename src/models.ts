@@ -47,7 +47,6 @@ export interface ApplicationField {
 }
 
 export interface ApplicationModelFields {
-  id: string;
   fields: ApplicationField[];
   object: ApplicationBaseObject;
 }
@@ -74,7 +73,6 @@ export interface PaginationMeta {
   isUpdatable(rights: string[]): boolean;
   onResponse(response: Response): void;
   toStr(cell: ApplicationField): string;
-  idFromJson(_: ApplicationBaseObject): string;
   setUpJsonKeyMap(): void;
 }
 
@@ -149,15 +147,10 @@ export abstract class PaginatedEntity implements PaginationMeta {
         )
       }
       this.resources.push({
-        id: this.idFromJson(resource),
         fields: fields,
         object: resource,
       });
     }
-  }
-
-  idFromJson(_: ApplicationBaseObject): string {
-    throw "unimplemented";
   }
 
   readonly jsonKeyMap: Record<string, string> = {};
@@ -450,10 +443,6 @@ export class UsersPagination extends PaginatedEntity {
 
   // todo implement on model view
   readonly retrieveOnModelView = true;
-
-  idFromJson(value: ApplicationBaseObject): string {
-    return `${value.id}`;
-  }
 
   constructor() {
     super();
